@@ -5,7 +5,7 @@ export interface ThemeState {
 }
 
 export interface AxiosContextReturn {
-  post: (url: string, data?: object) => Promise;
+  post: (url: string, data?: object) => Promise<any>;
   loading: boolean;
 }
 
@@ -54,12 +54,13 @@ export interface AddProductFormProps {
 }
 
 export interface Product {
-  _id: string;
-  category: Category;
+  _id?: string;
+  category: Category | string;
   category_name: string;
   name: string;
-  price: number;
-  imageUrls: string[];
+  price: number | string;
+  imageUrls?: string[];
+  imageFiles?: { file: File }[];
   description: string;
   brand: string;
   features: string[];
@@ -67,7 +68,8 @@ export interface Product {
     [key: string]: string | string[];
   };
   isInStock?: boolean;
-  originalPrice: number;
+  originalPrice: number | string;
+  discountedPrice?: number | string;
   cloudinaryPublicIds?: string[];
   createdAt?: string;
   updatedAt?: string;
