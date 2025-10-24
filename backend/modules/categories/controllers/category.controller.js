@@ -1,8 +1,7 @@
 import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
-import { redis } from "../../../lib/redis.js";
-import cloudinary from "../../../lib/cloudinary.js";
+import Product from "../../products/models/product.model.js";
 
 const Category = db.model.Category;
 
@@ -48,7 +47,6 @@ export const createCategory = async (req, res) => {
     }
 
     // Filter out empty strings, null, and undefined values from allowedUsers
-    // Only keep non-empty strings for validation and storage
     const filteredAllowedUsers = allowedUsers
       ? allowedUsers.filter(
           (email) =>
@@ -58,9 +56,6 @@ export const createCategory = async (req, res) => {
             email.trim() !== ""
         )
       : [];
-
-    console.log("Original allowedUsers:", allowedUsers);
-    console.log("Filtered allowedUsers:", filteredAllowedUsers);
 
     // Validate only the non-empty emails
     if (filteredAllowedUsers.length > 0) {
@@ -84,7 +79,7 @@ export const createCategory = async (req, res) => {
       name,
       description,
       requiresApproval: requiresApproval ?? true,
-      allowedUsers: filteredAllowedUsers, // Use filtered emails
+      allowedUsers: filteredAllowedUsers,
       attributes: attributes || [],
     };
 
@@ -100,299 +95,11 @@ export const createCategory = async (req, res) => {
       res
     );
   } catch (err) {
-    console.error("Error creating category:", err);
     errorResponse(
       500,
       "SERVER_ERROR",
       err.message ||
         "An unexpected error occurred while creating the category.",
-      res
-    );
-  }
-};
-
-// Update product with image handling
-export const updateProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      name,
-      description,
-      price,
-      brand,
-      color,
-      material,
-      compatibleDevices,
-      screenSize,
-      dimensions,
-      features,
-      imageFiles,
-      isInStock,
-      originalPrice,
-      batteryLife,
-      sensorType,
-      batteryDescription,
-    } = req.body;
-
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-      return errorResponse(404, "NOT_FOUND", "Product not found.", res);
-    }
-
-    const updateData = {
-      name,
-      description,
-      price: price ? parseFloat(price) : existingProduct.price,
-      brand,
-      color,
-      material,
-      compatibleDevices,
-      screenSize,
-      dimensions,
-      features: Array.isArray(features) ? features : existingProduct.features,
-      isInStock:
-        isInStock !== undefined
-          ? Boolean(isInStock)
-          : existingProduct.isInStock,
-      originalPrice: originalPrice
-        ? parseFloat(originalPrice)
-        : existingProduct.originalPrice,
-      batteryLife,
-      sensorType,
-      batteryDescription,
-    };
-
-    // Handle image updates if provided
-    if (imageFiles && Array.isArray(imageFiles)) {
-      const isValidImageData = imageFiles.every(
-        (img) => img.url && img.publicId && typeof img.url === "string"
-      );
-
-      if (!isValidImageData) {
-        return errorResponse(
-          400,
-          "VALIDATION_ERROR",
-          "Invalid image data format.",
-          res
-        );
-      }
-
-      updateData.imageUrls = imageFiles.map((img) => img.url);
-      updateData.cloudinaryPublicIds = imageFiles.map((img) => img.publicId);
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    });
-
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        product: updatedProduct,
-        message: "Product updated successfully",
-      },
-      res
-    );
-  } catch (err) {
-    console.error("Error updating product:", err);
-    errorResponse(
-      500,
-      "SERVER_ERROR",
-      err.message || "An unexpected error occurred while updating the product.",
-      res
-    );
-  }
-};
-
-// Delete image from Cloudinary
-export const deleteImage = async (req, res) => {
-  try {
-    const { publicId } = req.body;
-
-    if (!publicId) {
-      return errorResponse(
-        400,
-        "VALIDATION_ERROR",
-        "Public ID is required.",
-        res
-      );
-    }
-
-    const result = await cloudinary.uploader.destroy(publicId);
-
-    if (result.result === "ok") {
-      successResponse(
-        200,
-        "SUCCESS",
-        {
-          message: "Image deleted successfully",
-          publicId,
-        },
-        res
-      );
-    } else {
-      errorResponse(
-        400,
-        "DELETE_FAILED",
-        "Failed to delete image from Cloudinary.",
-        res
-      );
-    }
-  } catch (err) {
-    console.error("Error deleting image:", err);
-    errorResponse(
-      500,
-      "SERVER_ERROR",
-      err.message || "An unexpected error occurred while deleting the image.",
-      res
-    );
-  }
-};
-
-// Delete product with cleanup
-export const deleteProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const product = await Product.findById(id);
-    if (!product) {
-      return errorResponse(404, "NOT_FOUND", "Product not found.", res);
-    }
-
-    // Delete associated images from Cloudinary
-    if (product.cloudinaryPublicIds && product.cloudinaryPublicIds.length > 0) {
-      try {
-        await Promise.all(
-          product.cloudinaryPublicIds.map((publicId) =>
-            cloudinary.uploader.destroy(publicId)
-          )
-        );
-      } catch (cloudinaryError) {
-        console.error(
-          "Error deleting images from Cloudinary:",
-          cloudinaryError
-        );
-        // Continue with product deletion even if image cleanup fails
-      }
-    }
-
-    await Product.findByIdAndDelete(id);
-
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        message: "Product and associated images deleted successfully",
-      },
-      res
-    );
-  } catch (err) {
-    console.error("Error deleting product:", err);
-    errorResponse(
-      500,
-      "SERVER_ERROR",
-      err.message || "An unexpected error occurred while deleting the product.",
-      res
-    );
-  }
-};
-
-// Get all products with pagination and filtering
-export const getProducts = async (req, res) => {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      brand,
-      color,
-      minPrice,
-      maxPrice,
-      inStock,
-      search,
-      sortBy = "createdAt",
-      sortOrder = "desc",
-    } = req.query;
-
-    const query = {};
-
-    // Build filter query
-    if (brand) query.brand = { $regex: brand, $options: "i" };
-    if (color) query.color = { $regex: color, $options: "i" };
-    if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = parseFloat(minPrice);
-      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
-    }
-    if (inStock !== undefined) query.isInStock = inStock === "true";
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { brand: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
-
-    const [products, total] = await Promise.all([
-      Product.find(query)
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      Product.countDocuments(query),
-    ]);
-
-    const totalPages = Math.ceil(total / parseInt(limit));
-
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        products,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages,
-          totalItems: total,
-          itemsPerPage: parseInt(limit),
-          hasNextPage: parseInt(page) < totalPages,
-          hasPrevPage: parseInt(page) > 1,
-        },
-      },
-      res
-    );
-  } catch (err) {
-    console.error("Error fetching products:", err);
-    errorResponse(
-      500,
-      "SERVER_ERROR",
-      err.message || "An unexpected error occurred while fetching products.",
-      res
-    );
-  }
-};
-
-// Get single product
-export const getProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const product = await Product.findById(id).lean();
-    if (!product) {
-      return errorResponse(404, "NOT_FOUND", "Product not found.", res);
-    }
-
-    successResponse(200, "SUCCESS", { product }, res);
-  } catch (err) {
-    console.error("Error fetching product:", err);
-    errorResponse(
-      500,
-      "SERVER_ERROR",
-      err.message || "An unexpected error occurred while fetching the product.",
       res
     );
   }
@@ -413,72 +120,7 @@ export const findAllCategories = async (req, res) => {
     errorResponse(
       500,
       "ERROR",
-      err.message || "Some error occurred while finding products",
-      res
-    );
-  }
-};
-
-export const findAllFeaturedProducts = async (req, res) => {
-  try {
-    let featuredProducts = await redis.get("featured_products"); //find featured products in redis
-    if (featuredProducts) {
-      return res.json(JSON.parse(featuredProducts));
-    }
-    //if featured products not in redis
-    featuredProducts = await Product.find({ isFeatured: true }).lean(); //find all featured products from database
-    if (!featuredProducts) {
-      return res.status(404).json({ message: "No featured products found" });
-    }
-    //after finding store in redis
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        featuredProducts,
-      },
-      res
-    );
-  } catch (err) {
-    errorResponse(
-      500,
-      "ERROR",
-      err.message || "Some error occurred while finding featured products",
-      res
-    );
-  }
-};
-
-export const findAllRecommendedProducts = async (req, res) => {
-  try {
-    const recommendedProducts = await Product.aggregate([
-      {
-        $sample: { size: 3 },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          description: 1,
-          image: 1,
-          price: 1,
-        },
-      },
-    ]);
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        recommendedProducts,
-      },
-      res
-    );
-  } catch (err) {
-    errorResponse(
-      500,
-      "ERROR",
-      err.message || "Some error occurred while finding recommended products",
+      err.message || "Some error occurred while finding categories",
       res
     );
   }

@@ -1,5 +1,6 @@
 import ReduxWrapper from "./reduxWrapper";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 import LoadingProvider from "@/utils/LoadingProvider";
 
 export default function RootLayout({

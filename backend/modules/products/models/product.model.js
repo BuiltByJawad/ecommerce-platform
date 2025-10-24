@@ -26,7 +26,7 @@ const ProductSchema = new Schema(
     },
     originalPrice: {
       type: Number,
-      required: true,
+      required: false,
       min: [0, "Original Price cannot be negative"],
     },
     discountedPrice: {
@@ -43,12 +43,13 @@ const ProductSchema = new Schema(
       required: true,
       validate: {
         validator: function (value) {
-          if (value.size === 0) return false;
+          if (!value || value.size === 0) return false;
           for (const val of value.values()) {
             if (Array.isArray(val)) {
-              return val.every((item) => typeof item === "string");
+              if (!val.every((item) => typeof item === "string")) return false;
+            } else if (typeof val !== "string") {
+              return false;
             }
-            return typeof val === "string";
           }
           return true;
         },
@@ -68,8 +69,36 @@ const ProductSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
     cloudinaryPublicIds: {
       type: [String],
+    },
+
+    // Marketplace fields
+    seller: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false, // required for company-created products
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      index: true,
+    },
+    rejectionReason: {
+      type: String,
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
     },
   },
   {

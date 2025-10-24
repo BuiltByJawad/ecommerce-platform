@@ -5,15 +5,15 @@ import { protectedRoute, verifyToken } from "../../../middlewares/authJwt.js";
 
 const userRouter = express.Router();
 
-userRouter.get("/all-users", verifyToken, userController.findAll);
-userRouter.get("/user/:id", verifyToken, userController.findOne);
+userRouter.get("/all-users", protectedRoute, userController.findAll);
+userRouter.get("/user/:id", protectedRoute, userController.findOne);
 userRouter.put("/user/:id", protectedRoute, userController.updateProfile);
 userRouter.put(
   "/user/:id/password",
-  verifyToken,
+  protectedRoute,
   userController.updatePassword
 );
-userRouter.delete("/user/:id", verifyToken, userController.deleteOne);
+userRouter.delete("/user/:id", protectedRoute, userController.deleteOne);
 userRouter.post(
   "/user/upload-image",
   userPhotoUploadMulter,

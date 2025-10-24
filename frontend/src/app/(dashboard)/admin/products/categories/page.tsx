@@ -1,11 +1,6 @@
 "use client";
 
 import React from "react";
-import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import useAxios from "@/context/axiosContext";
 import { useTheme } from "next-themes";
 import AddCategoryForm from "@/app/(components)/CategoryForm/AddCategoryForm";
 

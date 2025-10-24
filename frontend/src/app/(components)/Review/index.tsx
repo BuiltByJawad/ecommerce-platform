@@ -31,21 +31,28 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Handle review form submission
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (reviewRating === 0 || !reviewComment.trim()) {
       alert("Please provide a rating and a comment.");
       return;
     }
-    console.log("Review submitted:", {
-      rating: reviewRating,
-      comment: reviewComment,
-    });
-    setReviewRating(0);
-    setReviewComment("");
-    setIsReviewModalOpen(false);
+    try {
+      setSubmittingReview(true);
+      // TODO: integrate with backend API to submit review
+      console.log("Review submitted:", {
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+      setReviewRating(0);
+      setReviewComment("");
+      setIsReviewModalOpen(false);
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   return (
@@ -192,9 +199,10 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  disabled={submittingReview}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Review
+                  {submittingReview ? "Submitting..." : "Submit Review"}
                 </button>
               </div>
             </form>

@@ -45,7 +45,7 @@ const PaymentCancelPage = () => {
         )}
 
         <p className="text-gray-700 dark:text-gray-300 mb-6">
-          Your payment has been cancelled. Don't worry, no charges were made to
+Your payment has been cancelled. Don&apos;t worry, no charges were made to
           your account.
         </p>
 

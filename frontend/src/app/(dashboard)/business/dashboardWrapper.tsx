@@ -12,7 +12,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed
   );
-  const user = useAppSelector((state) => state.global.currentUser);
 
   return (
     <div className="flex bg-gray-50 text-gray-900 w-full min-h-screen min-w-[1200px]">

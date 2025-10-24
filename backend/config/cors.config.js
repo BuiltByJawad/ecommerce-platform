@@ -2,7 +2,7 @@ import cors from "cors";
 
 export const configureCors = (app) => {
   const corsOptions = {
-    origin: "http://localhost:3000", // Allowed origin
+    origin: process.env.NEXT_APP_FRONTEND || "http://localhost:3000", // Allowed origin
     credentials: true, // Access-Control-Allow-Credentials: true
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

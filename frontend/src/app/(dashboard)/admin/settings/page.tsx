@@ -64,6 +64,8 @@ const initialSettings: SystemSettingsData = {
 
 let fetchedInitialSettings: SystemSettingsData | null = null;
 
+const numericFieldNames = new Set<string>(["point", "vat_type"]);
+
 const SystemSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettingsData>(initialSettings);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -140,8 +142,8 @@ const SystemSettingsPage: React.FC = () => {
             ? (e.target as HTMLInputElement).checked
               ? 1
               : 0
-            : type === "number"
-            ? value === "" // Allow empty string for number inputs
+            : numericFieldNames.has(name)
+            ? value === "" // Allow empty string for number-like inputs
               ? ""
               : parseFloat(value)
             : value,
@@ -184,7 +186,7 @@ const SystemSettingsPage: React.FC = () => {
     // The backend would typically handle either a file upload or a URL string.
 
     console.log("Submitting FormData (simulated):");
-    for (let [key, value] of formData.entries()) {
+    for (const [key, value] of formData.entries()) {
       // For File objects, value will be the File object itself.
       // For other fields, it will be the string representation.
       console.log(key, value instanceof File ? value.name : value);
@@ -428,15 +430,16 @@ const SystemSettingsPage: React.FC = () => {
               />
             ) : (
               <input
-                type={field.type}
+                type={field.type === "number" ? "text" : field.type}
                 id={field.name}
                 name={field.name}
                 value={settings[field.name as keyof SystemSettingsData]}
                 onChange={handleChange}
-                step={field.step}
+                step={field.type === "number" ? undefined : field.step}
                 required={field.required}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700"
                 placeholder={`Enter ${field.label.toLowerCase()}`}
+                inputMode={field.type === "number" ? "decimal" : undefined}
               />
             )}
           </div>

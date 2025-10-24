@@ -25,6 +25,7 @@ const Sidebar = () => {
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed
   );
+  const user = useAppSelector((state) => state.global.currentUser as any);
   const { theme } = useTheme();
   const [showLogo, setShowLogo] = useState(!isSidebarCollapsed);
 
@@ -49,6 +50,9 @@ const Sidebar = () => {
     border-gray-300 bg-gray-100 text-black dark:border-gray-100 dark:bg-gray-900 dark:text-white fixed transition-all 
     duration-300 ease-in-out overflow-hidden h-full shadow-md z-40 
     ${isSidebarCollapsed ? "w-16" : "w-[210px]"}`;
+
+  // Compute role-aware dashboard path
+  const dashboardHref = user?.role === "admin" ? "/admin" : user?.role === "company" ? "/business" : user?.role === "customer" ? "/home" : "/";
 
   return (
     <div className={sidebarClassNames}>
@@ -97,7 +101,7 @@ const Sidebar = () => {
       {/* LINKS */}
       <div className="flex-grow">
         <SidebarLink
-          href="/dashboard"
+          href={dashboardHref}
           icon={Layout}
           label="Dashboard"
           isCollapsed={isSidebarCollapsed}
@@ -106,6 +110,12 @@ const Sidebar = () => {
           href="/admin/products/categories"
           icon={Grid3X3}
           label="Categories"
+          isCollapsed={isSidebarCollapsed}
+        />
+        <SidebarLink
+          href="/admin/products/moderation"
+          icon={Package}
+          label="Moderation"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink

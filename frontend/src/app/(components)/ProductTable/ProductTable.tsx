@@ -14,37 +14,37 @@ import { FiChevronUp, FiChevronDown, FiEdit, FiTrash2, FiImage } from "react-ico
 
 const columnHelper = createColumnHelper<Product>();
 
+const formatPrice = (price?: number) =>
+  price != null
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(price)
+    : "N/A";
+const formatDate = (dateString?: string) =>
+  dateString
+    ? new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "N/A";
+const getStatusColor = (status?: Product["status"]) => {
+  if (!status) return "bg-gray-100 text-gray-700";
+  switch (status) {
+    case "Active":
+      return "bg-green-100 text-green-700";
+    case "Draft":
+      return "bg-yellow-100 text-yellow-700";
+    case "Archived":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+};
+
 const ProductTable: React.FC<ProductTableProps> = ({ products, onEdit, onDelete }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
-
-  const formatPrice = (price?: number) =>
-    price != null
-      ? new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(price)
-      : "N/A";
-  const formatDate = (dateString?: string) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : "N/A";
-  const getStatusColor = (status?: Product["status"]) => {
-    if (!status) return "bg-gray-100 text-gray-700";
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-700";
-      case "Draft":
-        return "bg-yellow-100 text-yellow-700";
-      case "Archived":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
 
   const columns = useMemo(
     (): ColumnDef<Product, any>[] => [
@@ -168,7 +168,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onEdit, onDelete 
         maxSize: 100,
       }),
     ],
-    [formatDate, formatPrice, getStatusColor, onEdit, onDelete]
+    [onEdit, onDelete]
   );
 
   const table = useReactTable({

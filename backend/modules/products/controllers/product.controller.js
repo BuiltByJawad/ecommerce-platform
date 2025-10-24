@@ -6,11 +6,10 @@ import cloudinary from "../../../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 
 export const createProduct = async (req, res) => {
-  console.log("this", req.body);
-  return;
   try {
     const {
       category,
+      category_name,
       name,
       description,
       price,
@@ -23,11 +22,11 @@ export const createProduct = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!name || !description || !price || !brand || !category || !features) {
+    if (!name || !description || !price || !brand || !category || !category_name || !features) {
       return errorResponse(
         400,
         "VALIDATION_ERROR",
-        "Please provide all required fields: name, description, price, brand, category, and features.",
+        "Please provide all required fields: name, description, price, brand, category, category_name, and features.",
         res
       );
     }
@@ -90,17 +89,24 @@ export const createProduct = async (req, res) => {
 
     const newProductData = {
       category,
+      category_name,
       name,
       description,
       price: parseFloat(price),
-      originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
       brand,
-      attributes, // Now stored as a Map
+      attributes, // stored as a Map by Mongoose
       features: Array.isArray(features) ? features : [],
       isInStock: Boolean(isInStock),
       imageUrls,
       cloudinaryPublicIds: imageFiles.map((img) => img.publicId),
     };
+
+    // Marketplace: set seller and moderation status for company users
+    if (req.user && req.user.role === "company") {
+      newProductData.seller = req.user._id;
+      newProductData.status = "pending";
+    }
 
     const product = await Product.create(newProductData);
 
@@ -109,7 +115,7 @@ export const createProduct = async (req, res) => {
       "SUCCESS",
       {
         product,
-        message: "Product created successfully",
+        message: "Product submitted for review",
       },
       res
     );
@@ -389,13 +395,13 @@ export const getProducts = async (req, res) => {
   }
 };
 
-// Get single product
+// Get single product (public: only approved)
 export const getProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
     const product = await Product.findById(id).lean();
-    if (!product) {
+    if (!product || product.status !== "approved") {
       return errorResponse(404, "NOT_FOUND", "Product not found.", res);
     }
 
@@ -413,7 +419,7 @@ export const getProduct = async (req, res) => {
 
 export const findAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}).populate("category");
+    const products = await Product.find({});
     successResponse(
       200,
       "SUCCESS",
@@ -439,7 +445,7 @@ export const findAllFeaturedProducts = async (req, res) => {
       return res.json(JSON.parse(featuredProducts));
     }
     //if featured products not in redis
-    featuredProducts = await Product.find({ isFeatured: true }).lean(); //find all featured products from database
+    featuredProducts = await Product.find({ isFeatured: true, status: "approved" }).lean(); //find all featured products from database
     if (!featuredProducts) {
       return res.status(404).json({ message: "No featured products found" });
     }
@@ -466,6 +472,7 @@ export const findAllFeaturedProducts = async (req, res) => {
 export const findAllRecommendedProducts = async (req, res) => {
   try {
     const recommendedProducts = await Product.aggregate([
+      { $match: { status: "approved" } },
       {
         $sample: { size: 3 },
       },
@@ -474,7 +481,7 @@ export const findAllRecommendedProducts = async (req, res) => {
           _id: 1,
           name: 1,
           description: 1,
-          image: 1,
+          imageUrls: 1,
           price: 1,
         },
       },
@@ -500,7 +507,7 @@ export const findAllRecommendedProducts = async (req, res) => {
 export const findProductsByCategory = async (req, res) => {
   const { category } = req.params;
   try {
-    const products = await Product.find({ category });
+    const products = await Product.find({ category, status: "approved" });
     successResponse(
       200,
       "SUCCESS",
@@ -577,7 +584,7 @@ export const deleteOne = async (req, res) => {
       });
     }
   } catch (err) {
-    errorHandler(
+    errorResponse(
       500,
       "ERROR",
       err.message || "Some error occurred while deleting the product.",
@@ -592,11 +599,10 @@ export const uploadImage = async (req, res) => {
 
     res.send(imageFiles);
   } catch (err) {
-    errorHandler(
+    errorResponse(
       500,
       "ERROR",
-      err.message ||
-        "Some error occurred while Finding Users By Date_of_Birth.",
+      err.message || "Some error occurred while uploading the image.",
       res
     );
   }
@@ -624,6 +630,7 @@ export const searchProducts = async (req, res) => {
     // Build search criteria
     let searchCriteria = {
       isInStock: true, // Only show in-stock items
+      status: "approved",
     };
 
     // Category filter
@@ -702,14 +709,68 @@ export const searchProducts = async (req, res) => {
 
 async function updateFeaturedProductsCache() {
   try {
-    const featuredProducts = await Product.find({ isFeatured: true }).lean();
+    const featuredProducts = await Product.find({ isFeatured: true, status: "approved" }).lean();
     await redis.set("featured_products", JSON.stringify(featuredProducts));
   } catch (error) {
-    errorResponse(
-      500,
-      "ERROR",
-      err.message || "Some error occurred in featured product update cache",
-      res
-    );
+    console.error("Error updating featured products cache:", error);
   }
 }
+
+// Company: list own products
+export const getMyProducts = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = { seller: req.user._id };
+    if (status && ["pending", "approved", "rejected"].includes(status)) {
+      query.status = status;
+    }
+    const products = await Product.find(query).sort({ createdAt: -1 }).lean();
+    successResponse(200, "SUCCESS", { products }, res);
+  } catch (err) {
+    errorResponse(500, "ERROR", err.message || "Failed to fetch seller products", res);
+  }
+};
+
+// Admin: list pending products
+export const listPendingProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ status: "pending" }).sort({ createdAt: 1 }).lean();
+    successResponse(200, "SUCCESS", { products }, res);
+  } catch (err) {
+    errorResponse(500, "ERROR", err.message || "Failed to fetch pending products", res);
+  }
+};
+
+// Admin: approve product
+export const approveProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { status: "approved", approvedBy: req.user._id, approvedAt: new Date(), rejectionReason: undefined },
+      { new: true }
+    );
+    if (!product) return errorResponse(404, "NOT_FOUND", "Product not found", res);
+    await updateFeaturedProductsCache();
+    successResponse(200, "SUCCESS", { product, message: "Product approved" }, res);
+  } catch (err) {
+    errorResponse(500, "ERROR", err.message || "Failed to approve product", res);
+  }
+};
+
+// Admin: reject product
+export const rejectProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { status: "rejected", rejectionReason: reason || "" },
+      { new: true }
+    );
+    if (!product) return errorResponse(404, "NOT_FOUND", "Product not found", res);
+    successResponse(200, "SUCCESS", { product, message: "Product rejected" }, res);
+  } catch (err) {
+    errorResponse(500, "ERROR", err.message || "Failed to reject product", res);
+  }
+};

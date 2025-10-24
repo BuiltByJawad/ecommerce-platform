@@ -31,6 +31,31 @@
   background-attachment: fixed;
 }
 
+/* Normalize native <select> arrows across browsers and themes */
+/* Applies to single-selects only so multi-select UI remains native */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: inherit; /* keep current bg from utility classes */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239CA3AF'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2.25rem; /* space for the arrow */
+  line-height: 1.5; /* centers text and arrow better */
+}
+
+/* Hide the native arrow in IE/Edge (legacy) */
+select::-ms-expand {
+  display: none;
+}
+
+/* Improve contrast of arrow on dark containers */
+.dark select:not([multiple]) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CBD5E1'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/></svg>");
+}
+
 html,
 body {
   /* min-width: 600px; */
@@ -67,5 +92,35 @@ nav {
 
   .container {
     height: -webkit-fill-available;
+  }
+}
+
+/* React-Toastify responsive tweaks */
+/* Make toasts expand on large screens and be full-width on small */
+.Toastify__toast {
+  width: auto !important;
+  max-width: clamp(320px, 50vw, 720px);
+  border-radius: 0.5rem;
+}
+.Toastify__toast-body {
+  display: flex;
+  align-items: center;
+}
+/* Large screens: keep messages on a single line when possible */
+@media (min-width: 1024px) {
+  .Toastify__toast-body {
+    white-space: nowrap;
+  }
+}
+/* Small screens: let toasts take the full viewport width and wrap text */
+@media (max-width: 640px) {
+  .Toastify__toast {
+    max-width: none;
+    width: calc(100vw - 1rem) !important;
+    margin: 0.5rem;
+  }
+  .Toastify__toast-body {
+    white-space: normal;
+    word-break: break-word;
   }
 }

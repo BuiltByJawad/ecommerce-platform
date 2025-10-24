@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -55,24 +55,30 @@ const Orders: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const formatPrice = (price: number) =>
-    price != null
-      ? new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(price)
-      : "N/A";
+  const formatPrice = useCallback(
+    (price: number) =>
+      price != null
+        ? new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(price)
+        : "N/A",
+    []
+  );
 
-  const formatDate = (dateString: string) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : "N/A";
+  const formatDate = useCallback(
+    (dateString: string) =>
+      dateString
+        ? new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "N/A",
+    []
+  );
 
-  const getStatusColor = (status: Order["status"]) => {
+  const getStatusColor = useCallback((status: Order["status"]) => {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-700";
@@ -87,12 +93,10 @@ const Orders: React.FC = () => {
       default:
         return "bg-gray-100 text-gray-700";
     }
-  };
+  }, []);
 
-  const updateOrderStatus = async (
-    orderId: string,
-    newStatus: Order["status"]
-  ) => {
+  const updateOrderStatus = useCallback(
+    async (orderId: string, newStatus: Order["status"]) => {
     try {
       const response = await post(`/order-details/update-status/${orderId}`, {
         status: newStatus,
@@ -109,7 +113,7 @@ const Orders: React.FC = () => {
       console.error("Error updating order status:", error);
       toast.error("Failed to update order status");
     }
-  };
+  }, [post]);
 
   const columns = useMemo((): ColumnDef<Order, any>[] => {
     return [
@@ -221,7 +225,7 @@ const Orders: React.FC = () => {
         maxSize: 120,
       }),
     ];
-  }, [formatDate, formatPrice, get]);
+  }, [formatDate, formatPrice, getStatusColor, updateOrderStatus]);
 
   const table = useReactTable({
     data: orders,

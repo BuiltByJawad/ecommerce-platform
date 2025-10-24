@@ -25,15 +25,17 @@ export const createCheckoutSession = async (req, res) => {
     const lineItems = products.map((product) => {
       const amount = Math.round(product.price * 100); //converting to cents
       totalAmount += amount * product.quantity;
+      const image = product.image || (Array.isArray(product.imageUrls) ? product.imageUrls[0] : undefined);
       return {
         price_data: {
           currency: "usd",
           product_data: {
             name: product.name,
-            images: [product.image],
+            ...(image ? { images: [image] } : {}),
           },
           unit_amount: amount,
         },
+        quantity: product.quantity,
       };
     });
     let coupon = null;
@@ -53,8 +55,8 @@ export const createCheckoutSession = async (req, res) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${process.env.NEXT_APP_FRONTEND}/success?session_id=${session}`,
-      cancel_url: `${process.env.NEXT_APP_FRONTEND}/cancel`,
+      success_url: `${process.env.NEXT_APP_FRONTEND}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_APP_FRONTEND}/payment/cancel`,
       discounts: coupon
         ? [
             {

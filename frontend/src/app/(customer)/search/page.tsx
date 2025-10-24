@@ -129,8 +129,8 @@ const SearchResultsPage = () => {
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              {searchResults?.pagination?.totalItems} results for "
-              {searchResults?.searchInfo?.query}"
+{searchResults?.pagination?.totalItems} results for &quot;
+              {searchResults?.searchInfo?.query}&quot;
               {searchResults?.searchInfo?.category !== "all" && (
                 <span> in {searchResults?.searchInfo?.category}</span>
               )}

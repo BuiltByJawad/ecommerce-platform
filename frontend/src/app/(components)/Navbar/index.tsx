@@ -2,7 +2,7 @@
 
 import { useAppDispatch, useAppSelector } from "../../redux";
 import { setCurrentUser } from "../../state";
-import { Bell, ShoppingCart, User, X } from "lucide-react";
+import { Bell, ShoppingCart, User } from "lucide-react";
 import ThemeSwitcher from "../ThemeSwitcher/ThemeSwitcher";
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
@@ -16,27 +16,7 @@ import Loading from "@/app/loading";
 import SearchBar from "./SearchBar/SearchBar";
 import SubMenu from "./SubMenu";
 
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  imageUrls: string[];
-  description?: string;
-  brand?: string;
-  category?: string;
-  features?: string[];
-  attributes?: { [key: string]: string | string[] };
-  isInStock?: boolean;
-  originalPrice?: number;
-  cloudinaryPublicIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-}
 
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -66,6 +46,9 @@ const Navbar = () => {
     try {
       const response: AxiosResponse = await post("/logout", {});
       if (response.status === 200) {
+        // Immediately clear auth state and navigate away
+        dispatch(setCurrentUser(null));
+        setIsDropdownOpen(false);
         toast.success(`Logged out successfully`, {
           position: "top-right",
           autoClose: 1100,
@@ -76,11 +59,9 @@ const Navbar = () => {
           progress: undefined,
           theme: "light",
         });
-        router.push("/signin");
-        setTimeout(() => {
-          dispatch(setCurrentUser(null));
-          setLoading(false);
-        }, 800);
+        // Use replace to avoid going back to the protected page
+        router.replace("/signin");
+        // Keep loading true until this component unmounts on navigation
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.data?.error || "An error occurred", {
@@ -92,7 +73,6 @@ const Navbar = () => {
         draggable: true,
         progress: undefined,
         theme: "light",
-        style: { width: "380px" },
       });
       setLoading(false);
     }

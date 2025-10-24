@@ -1,24 +1,37 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { EditIcon } from "@/app/(components)/Icons/Icons";
-import { Product, Category } from "@/types/types";
+import { Product } from "@/types/types";
 import useAxios from "@/context/axiosContext";
 import { toast } from "react-toastify";
 import Loading from "@/app/loading";
 import Image from "next/image";
 
-const columnHelper = createColumnHelper();
+const columnHelper = createColumnHelper<Product>();
 
 const ProductsPage = () => {
   const { get } = useAxios();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+
+  const badge = (status?: Product["status"], reason?: string) => {
+    const classes =
+      status === "approved"
+        ? "bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100"
+        : status === "pending"
+        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100"
+        : "bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100";
+    return (
+      <span title={status === "rejected" ? reason : undefined} className={`px-2 py-1 text-xs font-semibold rounded-full ${classes}`}>
+        {status ?? "N/A"}
+      </span>
+    );
+  };
 
   const columns = useMemo(
     () => [
@@ -27,7 +40,7 @@ const ProductsPage = () => {
         cell: (info) => (
           <div className="flex items-center gap-3">
             <Image
-              src={info?.row?.original?.imageUrls[0] || "/images/placeholder.jpg"}
+              src={info?.row?.original?.imageUrls?.[0] || "/images/placeholder.jpg"}
               alt={info?.row?.original?.name}
               width={60}
               height={60}
@@ -42,17 +55,19 @@ const ProductsPage = () => {
         header: "Brand",
         cell: (info) => info.getValue(),
       }),
-      columnHelper.accessor((row) => row.category?.name, {
-        id: "category",
+      columnHelper.accessor((row) => row.category_name, {
+        id: "category_name",
         header: "Category",
-        cell: (info) => {
-          console.log(info);
-          return <div>{info.getValue() || "N/A"}</div>;
-        },
+        cell: (info) => <div>{info.getValue() || "N/A"}</div>,
       }),
       columnHelper.accessor("price", {
         header: "Price",
         cell: (info) => `$${Number(info.getValue()).toFixed(2)}`,
+      }),
+      columnHelper.accessor((row) => row.status, {
+        id: "status",
+        header: "Status",
+        cell: (info) => badge(info.getValue(), info.row.original.rejectionReason),
       }),
       columnHelper.accessor("isInStock", {
         header: "In Stock",
@@ -84,10 +99,10 @@ const ProductsPage = () => {
     [router]
   );
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
-      const response = await get(`/products/all-products`);
-      setProducts(response?.data?.data?.products);
+      const response = await get(`/products/mine`);
+      setProducts(response?.data?.data?.products || []);
     } catch (error) {
       console.error("Failed to fetch products:", error);
       toast.error("Failed to load products", {
@@ -96,37 +111,30 @@ const ProductsPage = () => {
         theme: "light",
       });
     }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await get(`/categories/all-categories`);
-      setCategories(response?.data?.data?.categories);
-      console.log(response);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      toast.error("Failed to load categories", {
-        position: "top-right",
-        autoClose: 2000,
-        theme: "light",
-      });
-    }
-  };
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchProducts(), fetchCategories()]);
+      await fetchProducts();
       setIsLoading(false);
     };
     loadData();
-  }, []);
+  }, [fetchProducts]);
+
+  const categoriesFromProducts = useMemo(() => {
+    const map = new Map<string, string>();
+    products.forEach((p) => {
+      const id = String(p.category);
+      const name = p.category_name || String(p.category);
+      if (id) map.set(id, name);
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ _id: id, name }));
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory) {
-      return products;
-    }
-    return products.filter((product) => (product.category as Category)?._id === selectedCategory);
+    if (!selectedCategory) return products;
+    return products.filter((product) => String(product.category) === selectedCategory);
   }, [products, selectedCategory]);
 
   const table = useReactTable({
@@ -154,7 +162,7 @@ const ProductsPage = () => {
               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             >
               <option value="">All Categories</option>
-              {categories?.map((category) => (
+              {categoriesFromProducts?.map((category) => (
                 <option key={category._id} value={category._id}>
                   {category.name}
                 </option>

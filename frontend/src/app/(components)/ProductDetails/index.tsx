@@ -51,12 +51,12 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
   const [isRatingPopupOpen, setIsRatingPopupOpen] = useState(false);
   const [showMoreSpecs, setShowMoreSpecs] = useState(false);
 
-  const toggleShowMoreSpecs = () => {
+  const _toggleShowMoreSpecs = () => {
     setShowMoreSpecs(!showMoreSpecs);
   };
 
   // Function to render stars based on rating
-  const renderStars = (rating: number = 3.5) => {
+  const _renderStars = (rating: number = 3.5) => {
     const fullStars = Math.floor(rating); // Number of full stars
     const hasHalfStar = rating % 1 >= 0.5; // Check for half star
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0); // Remaining empty stars
@@ -77,7 +77,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
       </div>
     );
   };
-  console.log(product);
   return (
     <div className="w-1/3">
       <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">

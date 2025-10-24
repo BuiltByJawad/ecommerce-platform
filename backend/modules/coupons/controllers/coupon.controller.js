@@ -22,7 +22,7 @@ export const getCoupon = async (req, res) => {
       isActive: true,
     });
     successResponse(
-      201,
+      200,
       "SUCCESS",
       {
         coupons,
@@ -48,12 +48,12 @@ export const validateCoupon = async (req, res) => {
       isActive: true,
     });
     if (!coupon) {
-      errorResponse(404, "ERROR", "Coupon not found", res);
+      return errorResponse(404, "ERROR", "Coupon not found", res);
     }
     if (coupon.expiration_date < new Date()) {
       coupon.isActive = false;
       await coupon.save();
-      errorResponse(404, "ERROR", "Coupon expired", res);
+      return errorResponse(404, "ERROR", "Coupon expired", res);
     }
     successResponse(
       200,
@@ -70,77 +70,6 @@ export const validateCoupon = async (req, res) => {
       500,
       "ERROR",
       err.message || "Some error occurred while validating the coupon",
-      res
-    );
-  }
-};
-
-export const addToCart = async (req, res) => {
-  try {
-    const { productId } = req.body;
-    const user = req.user;
-    const existingItem = user.cartItems.find((item) => item.id === productId);
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      user.cartItems.push(productId);
-    }
-    await user.save();
-    successResponse(200, "SUCCESS", { cartItems: user.cartItems }, res);
-  } catch (err) {
-    errorResponse(
-      500,
-      "ERROR",
-      err.message || "Some error occurred while adding the item to cart",
-      res
-    );
-  }
-};
-
-export const removeAllFromCart = async (req, res) => {
-  try {
-    const { productId } = req.body;
-    const user = req.user;
-    if (!productId) {
-      user.cartItems = [];
-    } else {
-      user.cartItems = user.cartItems.filter((item) => item.id !== productId);
-    }
-    await user.save();
-    successResponse(200, "SUCCESS", { cartItems: user.cartItems }, res);
-  } catch (err) {
-    errorResponse(
-      500,
-      "ERROR",
-      err.message || "Some error occurred while removing the item from cart",
-      res
-    );
-  }
-};
-
-export const updateQuantity = async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const { quantity } = req.body;
-    const user = req.user;
-    const existingItem = user.cartItems.find((item) => item.id === productId);
-    if (existingItem) {
-      if (quantity === 0) {
-        user.cartItems = user.cartItems.filter((item) => item.id !== productId);
-        await user.save();
-        successResponse(200, "SUCCESS", { cartItems: user.cartItems }, res);
-      }
-      existingItem.quantity = quantity;
-      await user.save();
-      successResponse(200, "SUCCESS", { cartItems: user.cartItems }, res);
-    } else {
-      errorHandler(500, "ERROR", err.message || "Product not found.", res);
-    }
-  } catch (err) {
-    errorHandler(
-      500,
-      "ERROR",
-      err.message || "Some error occurred while updating the quantity.",
       res
     );
   }

@@ -1,13 +1,52 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-// import ProductForm from "@/app/(components)/ProductForm/ProductForm";
 import {
   getMockProductById,
-  initialProductData,
   ProductFormData,
 } from "../../ProductData";
 import { useEffect, useState } from "react";
+
+interface LocalProductFormProps {
+  isEditingForm: boolean;
+  initialDataForForm: ProductFormData;
+  onFormSubmit: (formData: FormData, productData: ProductFormData) => void;
+  onDeleteProduct: (id: string) => void;
+}
+
+const ProductForm: React.FC<LocalProductFormProps> = ({
+  isEditingForm,
+  initialDataForForm,
+  onFormSubmit,
+  onDeleteProduct,
+}) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const fd = new FormData();
+    onFormSubmit(fd, initialDataForForm);
+  };
+  return (
+    <div className="p-4 bg-white dark:bg-gray-800 rounded">
+      <h2 className="text-lg font-semibold mb-2">
+        {isEditingForm ? "Edit Product" : "Create Product"}
+      </h2>
+      <p className="text-sm mb-4">Name: {initialDataForForm.name}</p>
+      <div className="flex gap-2">
+        <button onClick={handleSubmit as any} className="px-3 py-2 bg-blue-600 text-white rounded">
+          Save
+        </button>
+        {initialDataForForm.id && (
+          <button
+            onClick={() => onDeleteProduct(initialDataForForm.id!)}
+            className="px-3 py-2 bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const EditProductPage = () => {
   const params = useParams();
@@ -41,7 +80,7 @@ const EditProductPage = () => {
   ) => {
     // In a real app, you would send this to your API
     console.log(`Updating product ID: ${productData.id} (FormData):`);
-    for (let [key, value] of formData.entries()) {
+    for (const [key, value] of formData.entries()) {
       console.log(key, value);
     }
     console.log("Product Data Object:", productData);

@@ -9,7 +9,7 @@ export const getCountries = async (req, res) => {
     const countries = await Country.find({});
 
     successResponse(
-      201,
+      200,
       "SUCCESS",
       {
         countries,

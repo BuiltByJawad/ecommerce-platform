@@ -1,10 +1,17 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+
+// Ensure upload directory exists
+const uploadDir = path.join(process.cwd(), "uploads", "users");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure storage for multer
 const storage = multer.diskStorage({
-  destination: function (req, res, cb) {
-    cb(null, "./uploads/users");
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     cb(null, "user" + "-" + Date.now() + path.extname(file.originalname));
@@ -12,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 // File filter configuration
-const fileFilter = (req, res, cb) => {
+const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 

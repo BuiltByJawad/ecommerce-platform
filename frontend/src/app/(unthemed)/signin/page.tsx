@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -7,15 +7,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 import useAxios from "@/context/axiosContext";
-import { useAppDispatch, useAppSelector } from "../../redux";
+import { useAppDispatch } from "../../redux";
 import { setCurrentUser } from "../../state";
-import Loading from "@/utils/LoadingProvider";
 
 export default function Login() {
   const { post } = useAxios();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.global.currentUser);
 
   const validationSchema = Yup.object({
     email: Yup.string()
@@ -61,10 +59,9 @@ export default function Login() {
         draggable: true,
         progress: undefined,
         theme: "light",
-        style: { width: "380px" },
       });
     }
-  }, []);
+  }, [post, dispatch, router]);
 
   return (
     <>
@@ -85,7 +82,7 @@ export default function Login() {
               validateOnChange={false}
               validateOnBlur={false}
             >
-              {({ isSubmitting, setFieldValue, values }) => (
+              {({ isSubmitting }) => (
                 <Form className="space-y-4 w-[300px] mx-auto">
                   {/* Email Input */}
                   <div>
@@ -133,12 +130,12 @@ export default function Login() {
 
                   {/* Forgot Password */}
                   <div className="flex items-center justify-between gap-2">
-                    <a
-                      href="#"
+                    <Link
+                      href="/forgot-password"
                       className="text-blue-500 text-sm hover:underline focus:ring-2 focus:ring-blue-500"
                     >
                       Forgot Password?
-                    </a>
+                    </Link>
                   </div>
 
                   {/* Login Button */}

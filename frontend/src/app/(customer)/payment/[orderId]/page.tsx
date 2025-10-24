@@ -45,7 +45,7 @@ const PaymentPage = () => {
     if (params.orderId) {
       fetchOrderData();
     }
-  }, [params.orderId]);
+  }, [params.orderId, router]);
 
   const initiatePayment = async () => {
     try {

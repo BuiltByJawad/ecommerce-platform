@@ -33,8 +33,7 @@ const OrderDetails = () => {
   const { theme } = useTheme();
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const user = null;
+  const [_isLoading, _setIsLoading] = useState(true);
   const cartItemsFromStore = useAppSelector((state) => state.global.cartItems);
   const cartItems = Object.values(cartItemsFromStore);
 
@@ -52,7 +51,8 @@ const OrderDetails = () => {
         });
         setCountries([]);
       } finally {
-        setIsLoading(false);
+        _setIsLoading(false);
+
       }
     };
     fetchCountries();

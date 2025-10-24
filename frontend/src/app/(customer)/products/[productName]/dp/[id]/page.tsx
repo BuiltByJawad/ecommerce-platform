@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAppSelector } from "@/app/redux";
-import RelatedProducts from "@/app/(components)/RelatedProducts";
 import AddToCartSection from "@/app/(components)/Cart";
 import ReviewsSection from "@/app/(components)/Review";
 import ProductDetailsSection from "@/app/(components)/ProductDetails";

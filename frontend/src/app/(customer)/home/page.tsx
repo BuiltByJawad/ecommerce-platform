@@ -45,7 +45,6 @@ const Home = () => {
       try {
         setIsLoading(true);
         const response = await get("/products/all-products");
-        console.log("API Response:", response?.data?.data?.products);
         if (response?.status === 200) {
           const fetchedProducts = response?.data?.data?.products || [];
           setProducts(fetchedProducts);
@@ -53,9 +52,7 @@ const Home = () => {
           throw new Error("Failed to fetch products");
         }
       } catch (err: any) {
-        console.error("Error fetching products:", err);
-        const errorMessage =
-          err?.response?.data?.message || "Failed to load products";
+        const errorMessage = err?.response?.data?.message || "Failed to load products";
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import SignUpForm from "./SignUpForm";
-import Loading from "@/utils/LoadingProvider";
+import Loading from "@/app/loading";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

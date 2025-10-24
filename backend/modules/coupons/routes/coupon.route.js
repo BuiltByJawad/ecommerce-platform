@@ -5,7 +5,7 @@ import { protectedRoute } from "../../../middlewares/authJwt.js";
 const CouponRouter = express.Router();
 
 CouponRouter.get("/", protectedRoute, CouponController.getCoupon);
-CouponRouter.get(
+CouponRouter.post(
   "/validate-coupon",
   protectedRoute,
   CouponController.validateCoupon

@@ -36,7 +36,6 @@ const ActivationForm = () => {
           draggable: true,
           progress: undefined,
           theme: "light",
-          style: { minWidth: "300px", whiteSpace: "nowrap" },
         });
         dispatch(setCurrentUser(response?.data?.data?.user));
       } else {
@@ -49,7 +48,6 @@ const ActivationForm = () => {
           draggable: true,
           progress: undefined,
           theme: "light",
-          style: { minWidth: "300px", whiteSpace: "nowrap" },
         });
       }
     } catch (error) {
@@ -64,7 +62,6 @@ const ActivationForm = () => {
           draggable: true,
           progress: undefined,
           theme: "light",
-          style: { width: "500px" },
         }
       );
     } finally {

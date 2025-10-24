@@ -23,8 +23,38 @@ const UserSchema = new mongoose.Schema(
     ],
     role: {
       type: String,
-      enum: ["customer", "admin"],
+      enum: ["customer", "admin", "company"],
       default: "customer",
+    },
+    // Company-specific fields (only for company role)
+    company_name: {
+      type: String,
+      required: function () {
+        return this.role === "company";
+      },
+    },
+    tax_id: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+    phone: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
+    business_type: {
+      type: String,
+      enum: [
+        "retail",
+        "wholesale",
+        "manufacturer",
+        "distributor",
+        "service_provider",
+        "other",
+        "",
+      ],
     },
     isVerified: {
       type: Boolean,

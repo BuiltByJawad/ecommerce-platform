@@ -57,7 +57,6 @@ const ProfileSection = () => {
         draggable: true,
         progress: undefined,
         theme: theme,
-        style: { width: "380px" },
       });
       setLoading(false);
     }

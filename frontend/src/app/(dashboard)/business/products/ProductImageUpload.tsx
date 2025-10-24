@@ -16,7 +16,7 @@ const ProductImageUpload: React.FC<ImageUploadProps> = ({
   maxFileSize = 5,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isValidating, setIsValidating] = useState(false);
+  const [isValidating, _setIsValidating] = useState(false);
 
   // Image validation
   const validateImage = (file: File): Promise<boolean> => {

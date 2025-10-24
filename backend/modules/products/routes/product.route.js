@@ -16,6 +16,35 @@ productRouter.post(
   companyRoute,
   productController.createProduct
 );
+
+// Seller endpoints
+productRouter.get(
+  "/mine",
+  protectedRoute,
+  companyRoute,
+  productController.getMyProducts
+);
+
+// Admin moderation endpoints
+productRouter.get(
+  "/moderation/pending",
+  protectedRoute,
+  adminRoute,
+  productController.listPendingProducts
+);
+productRouter.put(
+  "/moderation/approve/:id",
+  protectedRoute,
+  adminRoute,
+  productController.approveProduct
+);
+productRouter.put(
+  "/moderation/reject/:id",
+  protectedRoute,
+  adminRoute,
+  productController.rejectProduct
+);
+
 productRouter.get(
   "/all-products",
   // protectedRoute,
@@ -33,7 +62,6 @@ productRouter.get(
 productRouter.get("/search", productController.searchProducts);
 productRouter.get(
   "/:category",
-  verifyToken,
   productController.findProductsByCategory
 );
 productRouter.put(
@@ -46,7 +74,7 @@ productRouter.delete(
   "/:id",
   protectedRoute,
   adminRoute,
-  productController.deleteOne
+  productController.deleteProduct
 );
 productRouter.post(
   "/product/upload-image",

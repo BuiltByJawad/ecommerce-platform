@@ -13,31 +13,17 @@ const categoryRouter = express.Router();
 categoryRouter.post(
   "/create",
   protectedRoute,
-  companyRoute,
+  adminRoute,
   categoryController.createCategory
 );
 categoryRouter.get(
   "/all-categories",
   protectedRoute,
-  companyRoute,
   categoryController.findAllCategories
 );
 categoryRouter.get(
   "/:category",
-  verifyToken,
   categoryController.findProductsByCategory
-);
-categoryRouter.put(
-  "/:id",
-  protectedRoute,
-  adminRoute,
-  categoryController.toggleFeaturedProducts
-);
-categoryRouter.delete(
-  "/:id",
-  protectedRoute,
-  adminRoute,
-  categoryController.deleteOne
 );
 export default (app) => {
   app.use("/api/categories", categoryRouter);

@@ -87,7 +87,6 @@ const AddCategoryForm: React.FC<CategoryFormProps> = ({ theme }) => {
         pauseOnHover: false,
         draggable: true,
         theme: "light",
-        style: { width: "500px" },
       });
     } finally {
       setSubmitting(false);

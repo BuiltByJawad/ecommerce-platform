@@ -83,7 +83,6 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
         draggable: true,
         progress: undefined,
         theme: "light",
-        style: { width: "500px" },
       });
     }
   };
@@ -113,7 +112,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
               htmlFor="f_name"
               className="block text-sm font-medium text-gray-600"
             >
-              First name
+              First name <span className="text-red-500">*</span>
             </label>
             <Field
               type="text"
@@ -135,7 +134,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
               htmlFor="l_name"
               className="block text-sm font-medium text-gray-600"
             >
-              Last name
+              Last name <span className="text-red-500">*</span>
             </label>
             <Field
               type="text"
@@ -157,7 +156,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
               htmlFor="email"
               className="block text-sm font-medium text-gray-600"
             >
-              Email address
+              Email address <span className="text-red-500">*</span>
             </label>
             <Field
               type="email"
@@ -179,7 +178,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
               htmlFor="password"
               className="block text-sm font-medium text-gray-600"
             >
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <Field
               type="password"
@@ -202,7 +201,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
               htmlFor="confirmPassword"
               className="block text-sm font-medium text-gray-600"
             >
-              Confirm password
+              Confirm password <span className="text-red-500">*</span>
             </label>
             <Field
               type="password"

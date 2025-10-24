@@ -4,7 +4,6 @@ import React, { useEffect } from "react";
 import Navbar from "../(components)/Navbar";
 import { ToastContainer } from "react-toastify";
 import { useTheme } from "next-themes";
-import { useAppSelector } from "../redux";
 import { initFlowbite } from "flowbite";
 import Footer from "@/app/(components)/Footer";
 

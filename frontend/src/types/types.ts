@@ -71,6 +71,9 @@ export interface Product {
   originalPrice: number | string;
   discountedPrice?: number | string;
   cloudinaryPublicIds?: string[];
+  status?: "pending" | "approved" | "rejected";
+  rejectionReason?: string;
+  seller?: string;
   createdAt?: string;
   updatedAt?: string;
 }
