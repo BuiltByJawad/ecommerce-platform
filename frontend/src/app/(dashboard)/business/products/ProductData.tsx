@@ -3,7 +3,7 @@ export interface ProductFormData {
   name: string;
   description: string;
   price: number | string;
-  originalPrice?: number | string;
+  discountedPrice?: number | string;
   brand: string;
   color: string;
   material: string;
@@ -24,7 +24,7 @@ export const mockProducts: ProductFormData[] = [
     name: "Smartphone X",
     description: "A high-performance smartphone with advanced features.",
     price: 699.99,
-    originalPrice: 799.99,
+    discountedPrice: 649.99,
     brand: "TechTrend",
     color: "Midnight Black",
     material: "Aluminum and Glass",
@@ -65,7 +65,7 @@ export const mockProducts: ProductFormData[] = [
     name: "Smartwatch Z",
     description: "A sleek smartwatch with fitness tracking capabilities.",
     price: 249.99,
-    originalPrice: 299.99,
+    discountedPrice: 229.99,
     brand: "FitTech",
     color: "Silver",
     material: "Stainless Steel",

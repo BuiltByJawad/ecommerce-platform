@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import useAxios from "@/context/axiosContext";
 import { CategoryFormData, CategoryFormProps } from "@/types/types";
+import { withAutoReset } from "@/utils/formikHelpers";
 
 const validationSchema = Yup.object({
   name: Yup.string().required("Category name is required"),
@@ -97,7 +98,7 @@ const AddCategoryForm: React.FC<CategoryFormProps> = ({ theme }) => {
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={handleSubmit}
+      onSubmit={withAutoReset(handleSubmit)}
       validateOnChange={false}
       validateOnBlur={false}
     >

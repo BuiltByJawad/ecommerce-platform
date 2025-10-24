@@ -68,7 +68,6 @@ export interface Product {
     [key: string]: string | string[];
   };
   isInStock?: boolean;
-  originalPrice: number | string;
   discountedPrice?: number | string;
   cloudinaryPublicIds?: string[];
   status?: "pending" | "approved" | "rejected";

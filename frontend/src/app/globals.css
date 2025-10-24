@@ -99,7 +99,9 @@ nav {
 /* Make toasts expand on large screens and be full-width on small */
 .Toastify__toast {
   width: auto !important;
-  max-width: clamp(320px, 50vw, 720px);
+  /* Ensure a comfortable width even for short text, but scale with viewport */
+  min-width: clamp(420px, 38vw, 680px);
+  max-width: min(80vw, 800px);
   border-radius: 0.5rem;
 }
 .Toastify__toast-body {
@@ -115,6 +117,7 @@ nav {
 /* Small screens: let toasts take the full viewport width and wrap text */
 @media (max-width: 640px) {
   .Toastify__toast {
+    min-width: auto;
     max-width: none;
     width: calc(100vw - 1rem) !important;
     margin: 0.5rem;

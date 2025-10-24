@@ -17,7 +17,11 @@ const ProductsPage = () => {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totals, setTotals] = useState<{products: number; categories: number}>({ products: 0, categories: 0 });
 
   const badge = (status?: Product["status"], reason?: string) => {
     const classes =
@@ -99,28 +103,29 @@ const ProductsPage = () => {
     [router]
   );
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (page = 1) => {
     try {
-      const response = await get(`/products/mine`);
-      setProducts(response?.data?.data?.products || []);
+      const params = new URLSearchParams({ page: String(page), limit: "10" });
+      if (statusFilter) params.set("status", statusFilter);
+      const response = await get(`/products/mine?${params.toString()}`);
+      const data = response?.data?.data;
+      setProducts(data?.products || []);
+      setTotalPages(data?.pagination?.totalPages || 1);
+      setCurrentPage(data?.pagination?.currentPage || page);
+      if (data?.totals) setTotals({ products: data.totals.products || 0, categories: data.totals.categories || 0 });
     } catch (error) {
-      console.error("Failed to fetch products:", error);
-      toast.error("Failed to load products", {
-        position: "top-right",
-        autoClose: 2000,
-        theme: "light",
-      });
+      // console.error("Failed to fetch products:", error);
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await fetchProducts();
+      await fetchProducts(currentPage);
       setIsLoading(false);
     };
     loadData();
-  }, [fetchProducts]);
+  }, [fetchProducts, currentPage]);
 
   const categoriesFromProducts = useMemo(() => {
     const map = new Map<string, string>();
@@ -133,8 +138,10 @@ const ProductsPage = () => {
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory) return products;
-    return products.filter((product) => String(product.category) === selectedCategory);
+    let list = products;
+    if (selectedCategory) list = list.filter((p) => String(p.category) === selectedCategory);
+    // status filter is applied server-side
+    return list;
   }, [products, selectedCategory]);
 
   const table = useReactTable({
@@ -152,22 +159,40 @@ const ProductsPage = () => {
   ) : (
     <div className="max-w-7xl mx-auto p-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Manage Products</h1>
+        <div>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Manage Products</h1>
+          <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{totals.products} products • {totals.categories} categories</p>
+        </div>
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <select
-              id="category-filter"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            >
-              <option value="">All Categories</option>
-              {categoriesFromProducts?.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex gap-2">
+            <div className="relative">
+              <select
+                id="category-filter"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              >
+                <option value="">All Categories</option>
+                {categoriesFromProducts?.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative">
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              >
+                <option value="">All Statuses</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
           </div>
 
           <button
@@ -202,6 +227,7 @@ const ProductsPage = () => {
           </p>
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto bg-white dark:bg-gray-800 shadow-md rounded-lg">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
@@ -232,6 +258,24 @@ const ProductsPage = () => {
             </tbody>
           </table>
         </div>
+        <div className="flex justify-center items-center gap-2 mt-4">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage <= 1}
+            className={`px-3 py-1 rounded ${currentPage <= 1 ? "bg-gray-300 text-gray-500" : "bg-indigo-600 text-white"}`}
+          >
+            Prev
+          </button>
+          <span className="text-sm">Page {currentPage} of {totalPages}</span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage >= totalPages}
+            className={`px-3 py-1 rounded ${currentPage >= totalPages ? "bg-gray-300 text-gray-500" : "bg-indigo-600 text-white"}`}
+          >
+            Next
+          </button>
+        </div>
+        </>
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import Select from "react-select";
 import { AddProductFormProps, Category, Product } from "@/types/types";
 import { ProductSubmitIcon } from "../Icons/Icons";
 import { capitalize } from "@/utils/utils";
+import { withAutoReset } from "@/utils/formikHelpers";
 
 const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
   const { post, loading, get } = useAxios();
@@ -25,8 +26,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
           setCategories(response?.data?.data?.categories);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
-        toast.error("Failed to load categories");
+        // console.error("Error fetching categories:", error);
+        // toast.error("Failed to load categories");
       }
     };
     fetchCategories();
@@ -43,14 +44,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     };
     const schema: SchemaType = {
       category: Yup.string().required("Category is required"),
-      category_name: Yup.string().required("Category name is required"),
       name: Yup.string().required("Product name is required"),
       description: Yup.string().required("Description is required"),
       price: Yup.number().required("Price is required").min(0, "Price must be non-negative"),
-      originalPrice: Yup.number()
-        .required("Original price is required")
-        .min(0, "Original Price must be non-negative")
-        .moreThan(Yup.ref("price"), "Original price must be greater than current price"),
       discountedPrice: Yup.number()
         .min(0, "Discounted price must be at least 0")
         .lessThan(Yup.ref("price"), "Discounted price must be less than current price")
@@ -112,7 +108,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     name: "",
     description: "",
     price: "",
-    originalPrice: "",
     discountedPrice: "",
     brand: "",
     features: [],
@@ -149,7 +144,10 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     }
   };
 
-  const handleSubmit = async (values: Product, { setSubmitting }: any) => {
+  const handleSubmit = async (
+    values: Product,
+    { setSubmitting, resetForm }: { setSubmitting: (b: boolean) => void; resetForm: (nextState?: any) => void }
+  ) => {
     try {
       if (!values.imageFiles || values.imageFiles.length === 0) {
         toast.error("Please upload at least one product image");
@@ -182,26 +180,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
         return;
       }
 
-      const coercedAttributes = { ...(values.attributes || {}) } as Record<string, any>;
-      if (selectedCategory?.attributes) {
-        selectedCategory.attributes.forEach((attr) => {
-          if (attr.type === "number") {
-            const v = (values.attributes as any)?.[attr.name];
-            if (v !== undefined && v !== null && v !== "") {
-              coercedAttributes[attr.name] = Number(v);
-            }
-          }
-        });
-      }
-
       const productData = {
         ...values,
-        category_name: selectedCategory?.name || "",
         imageFiles: uploadedImages,
         price: parseFloat(values.price.toString()),
-        originalPrice: values.originalPrice ? parseFloat(values.originalPrice.toString()) : null,
         discountedPrice: values.discountedPrice ? parseFloat(values.discountedPrice.toString()) : null,
-        attributes: coercedAttributes,
+        attributes: values.attributes,
       };
 
       // Remove any undefined or null values
@@ -215,7 +199,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
 
       if (response?.status === 201) {
         toast.success("Product Created Successfully!");
-        // router.push("/products");
+        resetForm();
+        setSelectedCategory(null);
       }
     } catch (error: any) {
       console.error("Error submitting form:", error);
@@ -295,7 +280,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     <Formik
       initialValues={initialValues}
       validationSchema={productValidationSchema()}
-      onSubmit={handleSubmit}
+      onSubmit={withAutoReset(handleSubmit)}
       validateOnChange={false}
       validateOnBlur={false}
     >
@@ -356,22 +341,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
               <ErrorMessage name="price" component="p" className="text-red-500 text-xs mt-1" />
             </div>
 
-            <div>
-              <label
-                htmlFor="originalPrice"
-                className="block text-gray-700 dark:text-gray-300 font-medium mb-2 text-sm"
-              >
-                Original Price
-              </label>
-              <Field
-                type="text"
-                inputMode="decimal"
-                name="originalPrice"
-                placeholder="Enter original price"
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition text-sm"
-              />
-              <ErrorMessage name="originalPrice" component="p" className="text-red-500 text-xs mt-1" />
-            </div>
 
             <div>
               <label

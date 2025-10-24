@@ -10,16 +10,17 @@ const ModerationPage: React.FC = () => {
   const { get, put } = useAxios();
   const [pending, setPending] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [q, setQ] = useState("");
 
   const loadPending = useCallback(async () => {
     try {
-      const res = await get("/products/moderation/pending");
+      const res = await get(`/products/moderation/pending${q ? `?q=${encodeURIComponent(q)}` : ""}`);
       setPending(res?.data?.data?.products || []);
     } catch (e) {
       console.error(e);
       toast.error("Failed to load pending products");
     }
-  }, []);
+  }, [q]);
 
   useEffect(() => {
     (async () => {
@@ -60,7 +61,15 @@ const ModerationPage: React.FC = () => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg sm:text-xl font-bold">Moderation Queue</h1>
-        <span className="text-sm text-gray-500">{pending.length} pending</span>
+        <div className="flex items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name/brand/category"
+            className="border px-3 py-1.5 rounded"
+          />
+          <span className="text-sm text-gray-500">{pending.length} pending</span>
+        </div>
       </div>
 
       {pending.length === 0 ? (

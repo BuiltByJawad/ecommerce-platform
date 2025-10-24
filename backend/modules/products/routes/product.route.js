@@ -64,11 +64,27 @@ productRouter.get(
   "/:category",
   productController.findProductsByCategory
 );
+
+// Company: get own product by id
+productRouter.get(
+  "/mine/:id",
+  protectedRoute,
+  companyRoute,
+  productController.getMyProductById
+);
 productRouter.put(
   "/:id",
   protectedRoute,
   adminRoute,
   productController.toggleFeaturedProducts
+);
+
+// Company: update own product
+productRouter.put(
+  "/company/:id",
+  protectedRoute,
+  companyRoute,
+  productController.updateProduct
 );
 productRouter.delete(
   "/:id",

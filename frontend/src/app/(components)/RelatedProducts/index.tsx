@@ -8,7 +8,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  originalPrice: number;
+  discountedPrice?: number;
   image: string;
 }
 
@@ -119,13 +119,14 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ products }) => {
                 </span>
               </div>
               <p className="text-lg font-semibold text-gray-800 dark:text-white">
-                ${relatedProduct.price.toFixed(2)}
+                ${(relatedProduct.discountedPrice ?? relatedProduct.price).toFixed(2)}
               </p>
-              {relatedProduct.originalPrice && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 line-through">
-                  ${relatedProduct.originalPrice.toFixed(2)}
-                </p>
-              )}
+              {relatedProduct.discountedPrice &&
+                relatedProduct.discountedPrice < relatedProduct.price && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-through">
+                    ${relatedProduct.price.toFixed(2)}
+                  </p>
+                )}
             </Link>
           ))}
         </div>

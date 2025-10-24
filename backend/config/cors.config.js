@@ -1,13 +1,20 @@
 import cors from "cors";
 
 export const configureCors = (app) => {
+  const whitelist = [
+    process.env.NEXT_APP_FRONTEND || "http://localhost:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    process.env.DEV_LAN_FRONTEND || "http://192.168.0.126:3000",
+  ].filter(Boolean);
+
   const corsOptions = {
-    origin: process.env.NEXT_APP_FRONTEND || "http://localhost:3000", // Allowed origin
-    credentials: true, // Access-Control-Allow-Credentials: true
+    origin: whitelist,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200, // Ensures success status 200 for some legacy browsers
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    optionsSuccessStatus: 204,
   };
 
-  app.use(cors(corsOptions)); // Applying CORS middleware with the defined options
+  app.use(cors(corsOptions));
 };

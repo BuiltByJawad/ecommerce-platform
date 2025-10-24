@@ -15,13 +15,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
-app.use(helmet());
+// CORS must be applied as early as possible
+configureCors(app);
 
-// Rate limiting to prevent brute force attacks
+// Security middleware
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
+// Rate limiting (development-friendly): avoid counting preflights and refresh token
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // higher ceiling to prevent accidental throttling during dev
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === "OPTIONS" || req.path === "/api/refresh-token",
 });
 app.use(limiter);
 
@@ -34,15 +44,13 @@ app.use(mongoSanitize());
 app.use(hpp());
 
 // parse requests of content-type - application/json
-app.use(express.json({ limit: "50mb" }));
+// Accept any valid JSON, including primitives like null (fixes 400 from body-parser on refresh-token)
+app.use(express.json({ limit: "50mb", strict: false }));
 // parse requests of content-type - application/x-www-form-urlencoded
 
 app.use(express.urlencoded({ limit: "50mb", extended: false }));
 // middleware for parsing cookies from incoming requests
 app.use(cookieParser());
-
-// middleware configuration for CORS
-configureCors(app);
 
 // register all routes
 configureRoutes(app);

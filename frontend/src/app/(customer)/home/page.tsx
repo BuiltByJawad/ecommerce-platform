@@ -21,7 +21,7 @@ interface Product {
   features?: string[];
   attributes?: { [key: string]: string | string[] };
   isInStock?: boolean;
-  originalPrice?: number;
+  discountedPrice?: number;
   cloudinaryPublicIds?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -49,12 +49,12 @@ const Home = () => {
           const fetchedProducts = response?.data?.data?.products || [];
           setProducts(fetchedProducts);
         } else {
-          throw new Error("Failed to fetch products");
+          // throw new Error("Failed to fetch products");
         }
       } catch (err: any) {
-        const errorMessage = err?.response?.data?.message || "Failed to load products";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        // const errorMessage = err?.response?.data?.message || "Failed to load products";
+        // setError(errorMessage);
+        // toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }

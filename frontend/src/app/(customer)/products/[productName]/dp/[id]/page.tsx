@@ -58,12 +58,12 @@ const ProductDetails = () => {
         if (response?.status === 200 || response?.status === 201) {
           setProducts(response?.data?.data?.products || []);
         } else {
-          throw new Error("Failed to fetch products");
+          // throw new Error("Failed to fetch products");
         }
       } catch (error) {
-        console.error("Error fetching products:", error);
-        setError("Failed to load products");
-        toast.error("Failed to load products");
+        // console.error("Error fetching products:", error);
+        // setError("Failed to load products");
+        // toast.error("Failed to load products");
       }
     };
     fetchProducts();

@@ -64,8 +64,8 @@ const SearchResultsPage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const getDiscountPercentage = (original: number, current: number) => {
-    return Math.round(((original - current) / original) * 100);
+  const getDiscountPercentage = (price: number, discounted: number) => {
+    return Math.round(((price - discounted) / price) * 100);
   };
 
   if (loading && !searchResults) {
@@ -162,13 +162,13 @@ const SearchResultsPage = () => {
                         height={300}
                         className="w-full h-48 object-cover"
                       />
-                      {product?.originalPrice &&
-                        product?.originalPrice > product?.price && (
+                      {product?.discountedPrice &&
+                        product?.discountedPrice < product?.price && (
                           <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
                             -
                             {getDiscountPercentage(
-                              product?.originalPrice,
-                              product?.price
+                              product?.price,
+                              product?.discountedPrice
                             )}
                             %
                           </span>
@@ -198,10 +198,10 @@ const SearchResultsPage = () => {
                       </p>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg font-bold text-yellow-600">
-                          {product?.price}
+                          {(product?.discountedPrice ?? product?.price)?.toFixed(2)}
                         </span>
-                        {product?.originalPrice &&
-                          product?.originalPrice > product?.price && (
+                        {product?.discountedPrice &&
+                          product?.discountedPrice < product?.price && (
                             <span
                               className={`text-sm line-through ${
                                 theme === "dark"
@@ -209,7 +209,7 @@ const SearchResultsPage = () => {
                                   : "text-gray-400"
                               }`}
                             >
-                              {product?.originalPrice}
+                              {product?.price?.toFixed(2)}
                             </span>
                           )}
                       </div>

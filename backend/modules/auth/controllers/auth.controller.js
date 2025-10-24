@@ -20,16 +20,17 @@ const storeRefreshToken = async (userId, refreshToken) => {
 };
 
 const setCookies = (res, accessToken, refreshToken) => {
+  const isProd = process.env.NODE_ENV === "production";
   res.cookie("access_token", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    sameSite: isProd ? "lax" : "lax",
     maxAge: 15 * 60 * 1000,
   });
   res.cookie("refresh_token", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    sameSite: isProd ? "lax" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -283,10 +284,11 @@ export const refreshToken = async (req, res) => {
       process.env.ACCESS_TOKEN_SECRET_KEY,
       { expiresIn: "15m" }
     );
+    const isProd = process.env.NODE_ENV === "production";
     res.cookie("access_token", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: isProd,
+      sameSite: isProd ? "lax" : "lax",
       maxAge: 15 * 60 * 1000,
     });
     res.json({ message: "Token refreshed successfully" });

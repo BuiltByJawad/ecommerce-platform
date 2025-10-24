@@ -11,7 +11,7 @@ interface Product {
   _id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  discountedPrice?: number;
   image: string;
   description: string;
   brand: string;
@@ -68,9 +68,6 @@ const AddToCartSection: React.FC<AddToCartSectionProps> = ({ product }) => {
       <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-lg shadow-md sticky top-4">
         <p className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
           ${product?.price?.toFixed(2)}
-        </p>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-          List Price: ${product?.originalPrice?.toFixed(2)}
         </p>
         {/* <p className="text-gray-600 dark:text-gray-300 mb-2">
           $1.24 Shipping & Import Fees Deposit to Bangladesh

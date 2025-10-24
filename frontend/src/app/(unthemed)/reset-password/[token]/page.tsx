@@ -5,6 +5,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import useAxios from "@/context/axiosContext";
 import { toast, ToastContainer } from "react-toastify";
+import { withAutoReset } from "@/utils/formikHelpers";
 import "react-toastify/dist/ReactToastify.css";
 
 const validationSchema = Yup.object({
@@ -63,7 +64,7 @@ export default function ResetPasswordPage() {
             <Formik
               initialValues={{ password: "", confirmPassword: "" }}
               validationSchema={validationSchema}
-              onSubmit={onSubmit}
+              onSubmit={withAutoReset(onSubmit)}
               validateOnBlur={false}
               validateOnChange={false}
             >

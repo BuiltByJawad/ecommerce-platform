@@ -110,22 +110,23 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
       />
       <div className="mb-4">
         <p className="text-xl font-semibold text-gray-800 dark:text-white">
-          ${product?.price?.toFixed(2)}
+          ${(product?.discountedPrice ?? product?.price)?.toFixed(2)}
         </p>
-        {product?.originalPrice && (
+        {product?.discountedPrice && product?.discountedPrice < product?.price && (
           <p className="text-sm text-gray-500 line-through">
-            List Price: ${product?.originalPrice?.toFixed(2)}
+            List Price: ${product?.price?.toFixed(2)}
           </p>
         )}
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          $
-          {(
-            ((product?.originalPrice - product?.price) /
-              product?.originalPrice) *
-            100
-          )?.toFixed(0)}
-          % off
-        </p>
+        {product?.discountedPrice && product?.discountedPrice < product?.price && (
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            $
+            {(
+              ((product?.price - product?.discountedPrice) / product?.price) *
+              100
+            )?.toFixed(0)}
+            % off
+          </p>
+        )}
       </div>
       <p className="text-green-600 dark:text-green-400 mb-4">In Stock</p>
       <p className="text-gray-600 dark:text-gray-300 mb-2">

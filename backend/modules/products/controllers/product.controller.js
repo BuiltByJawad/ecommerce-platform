@@ -4,16 +4,16 @@ import successResponse from "../../../utils/successResponse.js";
 import { redis } from "../../../lib/redis.js";
 import cloudinary from "../../../lib/cloudinary.js";
 import Product from "../models/product.model.js";
+import Category from "../../categories/models/category.model.js";
 
 export const createProduct = async (req, res) => {
   try {
     const {
       category,
-      category_name,
       name,
       description,
       price,
-      originalPrice,
+      discountedPrice,
       brand,
       attributes,
       features,
@@ -22,13 +22,19 @@ export const createProduct = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!name || !description || !price || !brand || !category || !category_name || !features) {
+    if (!name || !description || !price || !brand || !category || !features) {
       return errorResponse(
         400,
         "VALIDATION_ERROR",
-        "Please provide all required fields: name, description, price, brand, category, category_name, and features.",
+        "Please provide all required fields: name, description, price, brand, category, and features.",
         res
       );
+    }
+
+    // Validate category exists and derive category_name
+    const categoryDoc = await Category.findById(category).lean();
+    if (!categoryDoc) {
+      return errorResponse(400, "VALIDATION_ERROR", "Invalid category id", res);
     }
 
     if (!imageFiles || imageFiles.length === 0) {
@@ -88,12 +94,12 @@ export const createProduct = async (req, res) => {
     const imageUrls = imageFiles.map((img) => img.url);
 
     const newProductData = {
-      category,
-      category_name,
+      category, // category id as string
+      category_name: categoryDoc.name,
       name,
       description,
       price: parseFloat(price),
-      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+      discountedPrice: discountedPrice ? parseFloat(discountedPrice) : undefined,
       brand,
       attributes, // stored as a Map by Mongoose
       features: Array.isArray(features) ? features : [],
@@ -130,7 +136,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// Update product with image handling
+// Update product with image handling (company updates revert to pending)
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,7 +153,7 @@ export const updateProduct = async (req, res) => {
       features,
       imageFiles,
       isInStock,
-      originalPrice,
+      discountedPrice,
       batteryLife,
       sensorType,
       batteryDescription,
@@ -156,6 +162,13 @@ export const updateProduct = async (req, res) => {
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
       return errorResponse(404, "NOT_FOUND", "Product not found.", res);
+    }
+
+    // Ownership check for company users
+    if (req.user?.role === "company") {
+      if (!existingProduct.seller || String(existingProduct.seller) !== String(req.user._id)) {
+        return errorResponse(403, "FORBIDDEN", "You do not have permission to update this product.", res);
+      }
     }
 
     const updateData = {
@@ -173,13 +186,20 @@ export const updateProduct = async (req, res) => {
         isInStock !== undefined
           ? Boolean(isInStock)
           : existingProduct.isInStock,
-      originalPrice: originalPrice
-        ? parseFloat(originalPrice)
-        : existingProduct.originalPrice,
+      discountedPrice:
+        discountedPrice ? parseFloat(discountedPrice) : existingProduct.discountedPrice,
       batteryLife,
       sensorType,
       batteryDescription,
     };
+
+    // Company updates should re-trigger moderation
+    if (req.user?.role === "company") {
+      updateData.status = "pending";
+      updateData.approvedBy = undefined;
+      updateData.approvedAt = undefined;
+      updateData.rejectionReason = undefined;
+    }
 
     // Handle image updates if provided
     if (imageFiles && Array.isArray(imageFiles)) {
@@ -716,16 +736,42 @@ async function updateFeaturedProductsCache() {
   }
 }
 
-// Company: list own products
+// Company: list own products with pagination and totals
 export const getMyProducts = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
     const query = { seller: req.user._id };
     if (status && ["pending", "approved", "rejected"].includes(status)) {
       query.status = status;
     }
-    const products = await Product.find(query).sort({ createdAt: -1 }).lean();
-    successResponse(200, "SUCCESS", { products }, res);
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [products, total, distinctCategories] = await Promise.all([
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Product.countDocuments(query),
+      Product.distinct("category", query),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum) || 1;
+
+    successResponse(200, "SUCCESS", {
+      products,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+      totals: {
+        products: total,
+        categories: distinctCategories.length,
+      },
+    }, res);
   } catch (err) {
     errorResponse(500, "ERROR", err.message || "Failed to fetch seller products", res);
   }
@@ -734,7 +780,16 @@ export const getMyProducts = async (req, res) => {
 // Admin: list pending products
 export const listPendingProducts = async (req, res) => {
   try {
-    const products = await Product.find({ status: "pending" }).sort({ createdAt: 1 }).lean();
+    const { q } = req.query;
+    const criteria = { status: "pending" };
+    if (q) {
+      criteria.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { brand: { $regex: q, $options: "i" } },
+        { category_name: { $regex: q, $options: "i" } },
+      ];
+    }
+    const products = await Product.find(criteria).sort({ createdAt: 1 }).lean();
     successResponse(200, "SUCCESS", { products }, res);
   } catch (err) {
     errorResponse(500, "ERROR", err.message || "Failed to fetch pending products", res);
@@ -772,5 +827,20 @@ export const rejectProduct = async (req, res) => {
     successResponse(200, "SUCCESS", { product, message: "Product rejected" }, res);
   } catch (err) {
     errorResponse(500, "ERROR", err.message || "Failed to reject product", res);
+  }
+};
+
+// Company: get single own product
+export const getMyProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id).lean();
+    if (!product) return errorResponse(404, "NOT_FOUND", "Product not found", res);
+    if (!product.seller || String(product.seller) !== String(req.user._id)) {
+      return errorResponse(403, "FORBIDDEN", "You do not have access to this product", res);
+    }
+    successResponse(200, "SUCCESS", { product }, res);
+  } catch (err) {
+    errorResponse(500, "ERROR", err.message || "Failed to fetch product", res);
   }
 };

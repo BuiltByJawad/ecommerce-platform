@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { useAppDispatch } from "../../redux";
 import { setCurrentUser } from "../../state";
 import { useRouter } from "next/navigation";
+import { withAutoReset } from "@/utils/formikHelpers";
 
 const validationSchema = Yup.object({
   f_name: Yup.string().required("First Name is required"),
@@ -103,7 +104,7 @@ const SignUpForm = ({ onLoadingChange }: SignUpFormProps) => {
       validationSchema={validationSchema}
       validateOnChange={true}
       validateOnBlur={false}
-      onSubmit={handleRegister}
+      onSubmit={withAutoReset(handleRegister)}
     >
       {({ errors, touched, isSubmitting }) => (
         <Form className="flex flex-col items-center justify-center relative">

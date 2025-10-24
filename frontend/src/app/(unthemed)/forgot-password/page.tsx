@@ -7,6 +7,7 @@ import useAxios from "@/context/axiosContext";
 import { toast, ToastContainer } from "react-toastify";
 import Link from "next/link";
 import Loading from "@/app/loading";
+import { withAutoReset } from "@/utils/formikHelpers";
 import "react-toastify/dist/ReactToastify.css";
 
 const validationSchema = Yup.object({
@@ -103,7 +104,7 @@ export default function ForgotPassword() {
               <Formik
                 initialValues={{ email: "" }}
                 validationSchema={validationSchema}
-                onSubmit={handleForgotPassword}
+                onSubmit={withAutoReset(handleForgotPassword)}
                 validateOnChange={false}
                 validateOnBlur={false}
               >

@@ -24,14 +24,16 @@ const ProductSchema = new Schema(
       required: true,
       min: [0, "Price cannot be negative"],
     },
-    originalPrice: {
-      type: Number,
-      required: false,
-      min: [0, "Original Price cannot be negative"],
-    },
     discountedPrice: {
       type: Number,
       min: [0, "Discounted price cannot be negative"],
+      validate: {
+        validator: function (value) {
+          if (value == null) return true;
+          return this.price == null || value < this.price;
+        },
+        message: "Discounted price must be less than price",
+      },
     },
     brand: {
       type: String,

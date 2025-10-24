@@ -9,6 +9,7 @@ import { toast, ToastContainer } from "react-toastify";
 import useAxios from "@/context/axiosContext";
 import { useAppDispatch } from "../../redux";
 import { setCurrentUser } from "../../state";
+import { withAutoReset } from "@/utils/formikHelpers";
 
 export default function Login() {
   const { post } = useAxios();
@@ -78,7 +79,7 @@ export default function Login() {
             <Formik
               initialValues={{ email: "", password: "", rememberMe: false }}
               validationSchema={validationSchema}
-              onSubmit={handleLogin}
+              onSubmit={withAutoReset(handleLogin)}
               validateOnChange={false}
               validateOnBlur={false}
             >
