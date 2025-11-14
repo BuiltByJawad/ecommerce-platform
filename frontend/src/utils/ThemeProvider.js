@@ -1,6 +1,6 @@
-"use client";
-import { ThemeProvider } from "next-themes";
-import { useEffect, useState } from "react";
+'use client';
+import { ThemeProvider } from 'next-themes';
+import { useEffect, useState } from 'react';
 
 export function Providers({ children }) {
   const [mounted, setMounted] = useState(false);
@@ -14,7 +14,7 @@ export function Providers({ children }) {
   }
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
       {children}
     </ThemeProvider>
   );

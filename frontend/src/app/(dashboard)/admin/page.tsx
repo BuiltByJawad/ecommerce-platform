@@ -1,6 +1,6 @@
-"use client";
-import { useTheme } from "next-themes";
-import React from "react";
+'use client';
+import { useTheme } from 'next-themes';
+import React from 'react';
 
 const Dashboard = () => {
   const { theme } = useTheme();

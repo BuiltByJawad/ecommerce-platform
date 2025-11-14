@@ -1,4 +1,4 @@
-import { NextRouter } from "next/router";
+import { NextRouter } from 'next/router';
 
 export interface ThemeState {
   theme: string;
@@ -37,7 +37,7 @@ export interface UserState {
 
 export interface Attribute {
   name: string;
-  type: "text" | "number" | "select";
+  type: 'text' | 'number' | 'select';
   required: boolean;
   options?: string[];
 }
@@ -70,7 +70,7 @@ export interface Product {
   isInStock?: boolean;
   discountedPrice?: number | string;
   cloudinaryPublicIds?: string[];
-  status?: "pending" | "approved" | "rejected";
+  status?: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   seller?: string;
   createdAt?: string;
@@ -123,7 +123,7 @@ export interface InitialStateTypes {
 
 export interface Attribute {
   name: string;
-  type: "text" | "number" | "select";
+  type: 'text' | 'number' | 'select';
   required: boolean;
   options?: string[];
 }

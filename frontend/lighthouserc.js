@@ -20,31 +20,31 @@ module.exports = {
         'categories:accessibility': ['error', { minScore: 0.95 }], // WCAG 2.2 AA
         'categories:best-practices': ['error', { minScore: 0.9 }],
         'categories:seo': ['error', { minScore: 0.9 }],
-        
+
         // Core Web Vitals (ISO 25010 aligned)
         'first-contentful-paint': ['error', { maxNumericValue: 2000 }],
         'largest-contentful-paint': ['error', { maxNumericValue: 2500 }],
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
         'total-blocking-time': ['error', { maxNumericValue: 300 }],
-        
+
         // Security & Best Practices
         'is-on-https': 'error',
         'uses-http2': 'warn',
         'no-vulnerable-libraries': 'error',
-        
+
         // Accessibility (ISO 9241 compliance)
         'color-contrast': 'error',
         'image-alt': 'error',
-        'label': 'error',
+        label: 'error',
         'link-name': 'error',
         'button-name': 'error',
-        
+
         // Performance
         'unused-css-rules': 'warn',
         'unused-javascript': 'warn',
         'modern-image-formats': 'warn',
         'efficient-animated-content': 'warn',
-        
+
         // PWA (if applicable)
         'service-worker': 'off', // Enable if implementing PWA
         'installable-manifest': 'off',

@@ -1,31 +1,31 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { jwtDecode } from "jwt-decode";
-import { DecodedToken } from "./types/types";
+import { NextResponse, type NextRequest } from 'next/server';
+import { jwtDecode } from 'jwt-decode';
+import { DecodedToken } from './types/types';
 
 const publicRoutes: string[] = [
-  "/home",
-  "/signin",
-  "/signup",
-  "/signup/activation",
-  "/business/login",
-  "/cart",
-  "/payment",
-  "/payment/success",
-  "/payment/cancel",
-  "/payment/fail",
-  "/search",
+  '/home',
+  '/signin',
+  '/signup',
+  '/signup/activation',
+  '/business/login',
+  '/cart',
+  '/payment',
+  '/payment/success',
+  '/payment/cancel',
+  '/payment/fail',
+  '/search',
 ];
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // Allow product routes publicly
-  if (pathname.startsWith("/products")) {
+  if (pathname.startsWith('/products')) {
     return NextResponse.next();
   }
 
   // Allow password reset/forgot publicly
-  if (pathname.startsWith("/reset-password") || pathname.startsWith("/forgot-password")) {
+  if (pathname.startsWith('/reset-password') || pathname.startsWith('/forgot-password')) {
     return NextResponse.next();
   }
 
@@ -34,9 +34,9 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
-  const tokenCookie = request.cookies.get("refresh_token");
+  const tokenCookie = request.cookies.get('refresh_token');
   if (!tokenCookie) {
-    return NextResponse.redirect(new URL("/signin", request.url));
+    return NextResponse.redirect(new URL('/signin', request.url));
   }
 
   try {
@@ -45,21 +45,21 @@ export function middleware(request: NextRequest): NextResponse {
     const userVerified: boolean = decodedToken.userVerified;
 
     // Email verification gate for authenticated users
-    if (!userVerified && pathname !== "/signup/activation" && pathname !== "/signin") {
-      return NextResponse.redirect(new URL("/signup/activation", request.url));
+    if (!userVerified && pathname !== '/signup/activation' && pathname !== '/signin') {
+      return NextResponse.redirect(new URL('/signup/activation', request.url));
     }
 
     // Role-based gates for admin-only areas
-    if (pathname.startsWith("/admin") && userRole !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+    if (pathname.startsWith('/admin') && userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
     }
 
     return NextResponse.next();
   } catch {
-    return NextResponse.redirect(new URL("/signin", request.url));
+    return NextResponse.redirect(new URL('/signin', request.url));
   }
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|images).*)'],
 };

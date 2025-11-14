@@ -1,6 +1,6 @@
-"use client";
-import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+'use client';
+import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 interface ProductImageZoomProps {
   imageSrc: string;
@@ -23,8 +23,7 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
   const updateZoomPosition = (clientX: number, clientY: number) => {
     if (!imageRef.current) return;
 
-    const { left, top, width, height } =
-      imageRef.current.getBoundingClientRect();
+    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
     const x = clientX - left;
     const y = clientY - top;
 
@@ -82,18 +81,18 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
       // Check for search backdrop specifically
       const backdrop = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-30');
       const isBackdropVisible = backdrop && window.getComputedStyle(backdrop).display !== 'none';
-      
+
       // Check for any high z-index elements that might be overlays
       const highZElements = document.querySelectorAll('[style*="z-index"]');
-      const hasHighZOverlay = Array.from(highZElements).some(el => {
+      const hasHighZOverlay = Array.from(highZElements).some((el) => {
         const style = window.getComputedStyle(el);
         const zIndex = parseInt(style.zIndex);
         return zIndex > 100 && style.position === 'fixed' && style.display !== 'none';
       });
-      
+
       const overlayActive = !!(isBackdropVisible || hasHighZOverlay);
       setIsOverlayActive(overlayActive);
-      
+
       // If overlay becomes active and zoom is currently on, turn it off
       if (overlayActive && isZoomed) {
         setIsZoomed(false);
@@ -106,7 +105,7 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['style', 'class']
+      attributeFilter: ['style', 'class'],
     });
 
     // Initial check
@@ -121,20 +120,17 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
   const zoomFactor = zoomWindowSize / lensSize;
 
   return (
-    <div
-      className="w-1/3 relative top-0 self-start"
-      style={{ height: "fit-content" }}
-    >
+    <div className='w-1/3 relative top-0 self-start' style={{ height: 'fit-content' }}>
       <div
         ref={imageRef}
-        className="relative touch-none"
+        className='relative touch-none'
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ cursor: isZoomed ? "none" : "zoom-in" }}
+        style={{ cursor: isZoomed ? 'none' : 'zoom-in' }}
       >
         <Image
           src={imageSrc}
@@ -142,11 +138,11 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
           width={400}
           height={400}
           priority
-          className="object-cover w-full rounded-lg shadow-md select-none"
+          className='object-cover w-full rounded-lg shadow-md select-none'
         />
         {isZoomed && (
           <div
-            className="absolute border-2 border-gray-400 bg-gray-200 bg-opacity-30 pointer-events-none"
+            className='absolute border-2 border-gray-400 bg-gray-200 bg-opacity-30 pointer-events-none'
             style={{
               width: `${lensSize}px`,
               height: `${lensSize}px`,
@@ -157,42 +153,40 @@ const ProductImageZoom = ({ imageSrc, imageAlt }: ProductImageZoomProps) => {
         )}
         {isZoomed && (
           <div
-            className="fixed border border-gray-300 rounded-lg shadow-lg overflow-hidden z-10"
+            className='fixed border border-gray-300 rounded-lg shadow-lg overflow-hidden z-10'
             style={{
               width: `${zoomWindowSize}px`,
               height: `${zoomWindowSize}px`,
-              top: "20%",
-              left: "35%",
+              top: '20%',
+              left: '35%',
               backgroundImage: `url(${imageSrc})`,
-              backgroundSize: `${imageWidth * zoomFactor}px ${
-                imageHeight * zoomFactor
-              }px`,
+              backgroundSize: `${imageWidth * zoomFactor}px ${imageHeight * zoomFactor}px`,
               backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
             }}
           />
         )}
       </div>
-      <div className="flex gap-2 mt-4">
+      <div className='flex gap-2 mt-4'>
         <Image
           src={imageSrc}
-          alt="Thumbnail 1"
+          alt='Thumbnail 1'
           width={80}
           height={80}
-          className="object-cover rounded-md cursor-pointer"
+          className='object-cover rounded-md cursor-pointer'
         />
         <Image
           src={imageSrc}
-          alt="Thumbnail 2"
+          alt='Thumbnail 2'
           width={80}
           height={80}
-          className="object-cover rounded-md cursor-pointer"
+          className='object-cover rounded-md cursor-pointer'
         />
         <Image
           src={imageSrc}
-          alt="Thumbnail 3"
+          alt='Thumbnail 3'
           width={80}
           height={80}
-          className="object-cover rounded-md cursor-pointer"
+          className='object-cover rounded-md cursor-pointer'
         />
       </div>
     </div>

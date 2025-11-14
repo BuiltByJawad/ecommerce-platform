@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import "@/app/globals.css";
+import type { Metadata } from 'next';
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
-  title: "Profile Page",
-  description: "profile page",
+  title: 'Profile Page',
+  description: 'profile page',
 };
 
 export default function RootLayout({

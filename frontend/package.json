@@ -6,7 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "audit:security": "npm audit --audit-level moderate",
+    "audit:lighthouse": "lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json --chrome-flags=\"--headless --no-sandbox\"",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:a11y": "axe http://localhost:3000",
+    "pre-commit": "lint-staged",
+    "prepare": "husky"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
@@ -18,7 +29,7 @@
     "framer-motion": "^12.0.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.473.0",
-    "next": "15.1.6",
+    "next": "15.5.6",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
     "react-confetti": "^6.2.2",
@@ -34,15 +45,55 @@
     "sslcommerz-lts": "^1.1.0",
     "yup": "^1.6.1"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
+    "@axe-core/cli": "^4.11.0",
     "@eslint/eslintrc": "^3",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@lhci/cli": "^0.15.1",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "bundle-analyzer": "^0.0.6",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-security": "^3.0.1",
+    "husky": "^9.1.7",
+    "jsdom": "^25.0.0",
+    "lighthouse": "^12.2.1",
+    "lint-staged": "^15.5.2",
     "postcss": "^8",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.0.0",
+    "webpack-bundle-analyzer": "^4.10.0"
   }
 }

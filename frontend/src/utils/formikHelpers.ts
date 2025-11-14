@@ -1,4 +1,4 @@
-import type { FormikHelpers } from "formik";
+import type { FormikHelpers } from 'formik';
 
 // Wrap a Formik onSubmit to automatically reset the form when the handler resolves without throwing
 export function withAutoReset<T>(

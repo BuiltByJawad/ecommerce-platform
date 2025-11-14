@@ -777,10 +777,10 @@ export const getMyProducts = async (req, res) => {
   }
 };
 
-// Admin: list pending products
+// Admin: list pending products (with pagination)
 export const listPendingProducts = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 10 } = req.query;
     const criteria = { status: "pending" };
     if (q) {
       criteria.$or = [
@@ -789,8 +789,29 @@ export const listPendingProducts = async (req, res) => {
         { category_name: { $regex: q, $options: "i" } },
       ];
     }
-    const products = await Product.find(criteria).sort({ createdAt: 1 }).lean();
-    successResponse(200, "SUCCESS", { products }, res);
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [products, total] = await Promise.all([
+      Product.find(criteria).sort({ createdAt: 1 }).skip(skip).limit(limitNum).lean(),
+      Product.countDocuments(criteria),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limitNum) || 1);
+
+    successResponse(200, "SUCCESS", {
+      products,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+    }, res);
   } catch (err) {
     errorResponse(500, "ERROR", err.message || "Failed to fetch pending products", res);
   }

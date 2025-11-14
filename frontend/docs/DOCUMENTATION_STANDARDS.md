@@ -1,264 +1,146 @@
-# Documentation Standards (ISO 26531 Compliance)
+# Documentation Standards
 
-## JSDoc Standards
+## Overview
+
+This document outlines the documentation standards for the ecommerce frontend
+project, aligned with ISO 26531 - Software Documentation standards.
+
+## Documentation Structure
+
+### 1. Code Documentation (JSDoc)
+
+All functions, classes, and components must include JSDoc comments:
+
+```javascript
+/**
+ * Calculates the total price including tax
+ * @param {number} price - Base price before tax
+ * @param {number} taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
+ * @returns {number} Total price including tax
+ * @example
+ * calculateTotal(100, 0.08) // returns 108
+ */
+function calculateTotal(price, taxRate) {
+  return price * (1 + taxRate);
+}
+```
+
+### 2. Component Documentation
+
+React components must document:
+
+- Purpose and usage
+- Props interface
+- Example usage
+- Dependencies
+
+```typescript
+/**
+ * ProductCard component displays product information
+ * @component
+ * @param {Object} props - Component props
+ * @param {Product} props.product - Product data object
+ * @param {Function} props.onAddToCart - Callback when adding to cart
+ * @example
+ * <ProductCard product={product} onAddToCart={handleAddToCart} />
+ */
+interface ProductCardProps {
+  product: Product;
+  onAddToCart: (product: Product) => void;
+}
+```
+
+### 3. File Headers
+
+Every source file must include a header comment:
+
+```javascript
+/**
+ * @fileoverview Product management utilities
+ * @author Ecommerce Team
+ * @version 1.0.0
+ * @since 2025-01-01
+ * @license MIT
+ */
+```
+
+## Documentation Requirements
 
 ### Function Documentation
-```typescript
-/**
- * Calculates the total price including tax for an ecommerce cart
- * 
- * @param items - Array of cart items with price and quantity
- * @param taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
- * @param discountCode - Optional discount code to apply
- * 
- * @returns Object containing subtotal, tax, discount, and total
- * 
- * @throws {ValidationError} When tax rate is negative or greater than 1
- * @throws {NotFoundError} When discount code is invalid
- * 
- * @example
- * ```typescript
- * const items = [{ price: 100, quantity: 2 }, { price: 50, quantity: 1 }];
- * const result = calculateCartTotal(items, 0.08, 'SAVE10');
- * console.log(result.total); // 162.0
- * ```
- * 
- * @since 1.0.0
- * @version 1.2.0
- */
-```
+
+- **Required for all exported functions**
+- **Required for complex internal functions** (cyclomatic complexity > 5)
+- Include: description, parameters, return value, examples, throws
+
+### Type Documentation
+
+- **Required for all TypeScript interfaces and types**
+- Document purpose and usage constraints
 
 ### Component Documentation
-```typescript
-/**
- * ProductCard component displays product information in a card format
- * 
- * @component
- * @param props - Component props
- * @param props.product - Product data object
- * @param props.onAddToCart - Callback fired when add to cart is clicked
- * @param props.className - Additional CSS classes
- * 
- * @example
- * ```tsx
- * <ProductCard 
- *   product={product} 
- *   onAddToCart={(id) => addToCart(id)}
- *   className="mb-4"
- * />
- * ```
- */
-```
 
-### Interface Documentation
-```typescript
-/**
- * User profile information structure
- * 
- * @interface UserProfile
- * @property {string} id - Unique user identifier (UUID format)
- * @property {string} email - User email address (must be valid email)
- * @property {string} firstName - User's first name (1-50 characters)
- * @property {string} lastName - User's last name (1-50 characters)
- * @property {UserRole} role - User's role in the system
- * @property {Date} createdAt - Account creation timestamp
- * @property {Date} lastLoginAt - Last login timestamp (nullable)
- */
-```
+- **Required for all components**
+- Include: purpose, props, state, lifecycle methods
+- Provide usage examples
 
-## File Header Standards
+## Quality Standards
 
-### Component Files
-```typescript
-/**
- * @fileoverview ProductCard component for displaying product information
- * @module components/ProductCard
- * @requires react
- * @requires next/image
- * @author Your Name <email@example.com>
- * @created 2024-01-20
- * @modified 2024-01-25
- * @version 1.2.0
- */
-```
+### Completeness
 
-### Utility Files
-```typescript
-/**
- * @fileoverview Utility functions for cart calculations and operations
- * @module utils/cartUtils
- * @since 1.0.0
- * @version 1.3.0
- */
-```
+- 100% of exported functions documented
+- 100% of public APIs documented
+- 100% of complex logic explained
 
-## README Structure
+### Accuracy
 
-### Component README Template
-```markdown
-# ComponentName
+- Documentation must match implementation
+- Examples must be functional
+- Parameter types must be correct
 
-Brief description of what the component does.
+### Consistency
 
-## Usage
+- Use consistent terminology
+- Follow established patterns
+- Maintain uniform formatting
 
-```tsx
-import { ComponentName } from './ComponentName';
+## Tools and Validation
 
-<ComponentName 
-  prop1="value1"
-  prop2={value2}
-  onEvent={handleEvent}
-/>
-```
+### JSDoc Validation
 
-## Props
+Run `npm run lint:jsdoc` to validate JSDoc comments.
 
-| Prop | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| prop1 | string | Yes | - | Description of prop1 |
-| prop2 | number | No | 0 | Description of prop2 |
+### Documentation Coverage
 
-## Examples
+Use documentation coverage tools to ensure completeness.
 
-### Basic Usage
-[Code example]
+## Maintenance
 
-### Advanced Usage
-[Code example]
+### Update Requirements
 
-## Accessibility
+- Update documentation when code changes
+- Review documentation during code reviews
+- Keep examples current and functional
 
-- WCAG 2.2 AA compliant
-- Keyboard navigation support
-- Screen reader friendly
-- Focus management
+### Review Process
 
-## Performance Considerations
+- Documentation reviewed as part of pull request process
+- Automated checks prevent merging undocumented code
 
-- Memoization applied where appropriate
-- Bundle size impact: ~2KB gzipped
-- Lazy loading for heavy components
+## Best Practices
 
-## Testing
+1. **Write documentation before implementation** when possible
+2. **Use active voice** and clear language
+3. **Include practical examples** for complex functions
+4. **Document edge cases** and error conditions
+5. **Keep documentation near code** it describes
 
-```bash
-npm run test ComponentName
-```
+## Compliance Checklist
 
-## Changelog
+- [ ] All exported functions have JSDoc comments
+- [ ] All components are fully documented
+- [ ] Type definitions are documented
+- [ ] File headers are present
+- [ ] Examples are functional and current
+- [ ] Documentation passes linting checks
 
-### v1.2.0 (2024-01-25)
-- Added new feature X
-- Fixed accessibility issue Y
-- Improved performance by Z%
-```
-
-## Code Comments Standards
-
-### Inline Comments
-```typescript
-// HACK: Temporary workaround for API inconsistency (ticket #123)
-// TODO: Replace with proper error boundary once React 19 is stable
-// FIXME: Memory leak in cleanup function (reported in issue #456)
-// NOTE: This calculation must match backend logic in OrderService.java
-```
-
-### Complex Logic Comments
-```typescript
-/**
- * Complex pricing calculation that considers:
- * 1. Base product price
- * 2. Volume discounts (>10 items = 5% off, >50 items = 12% off)
- * 3. Membership tier bonuses (Gold = 3% off, Platinum = 7% off)
- * 4. Seasonal promotions (Black Friday, Summer Sale, etc.)
- * 
- * Business rules documented in: /docs/pricing-rules.md
- */
-const calculateFinalPrice = (product, quantity, user, promotions) => {
-  // Implementation...
-};
-```
-
-## Changelog Standards (ISO 14764)
-
-### Format
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
-## [Unreleased]
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
-
-## [1.2.0] - 2024-01-25
-### Added
-- New payment integration with Stripe
-- Dark mode support
-- Internationalization (i18n) framework
-
-### Changed
-- Updated design system to v2.0
-- Improved loading performance by 40%
-
-### Fixed
-- Cart calculation bug with tax rates
-- Accessibility issues in checkout flow
-```
-
-## API Documentation
-
-### Endpoint Documentation
-```typescript
-/**
- * @api {POST} /api/orders Create New Order
- * @apiName CreateOrder
- * @apiGroup Orders
- * @apiVersion 1.2.0
- * 
- * @apiDescription Creates a new order in the system
- * 
- * @apiParam {Object[]} items Array of order items
- * @apiParam {String} items.productId Product identifier
- * @apiParam {Number} items.quantity Item quantity
- * @apiParam {String} shippingAddress Shipping address
- * @apiParam {String} paymentMethod Payment method (stripe, paypal)
- * 
- * @apiSuccess {String} orderId Unique order identifier
- * @apiSuccess {String} status Order status
- * @apiSuccess {Number} total Order total amount
- * 
- * @apiError {String} ValidationError Invalid input data
- * @apiError {String} PaymentError Payment processing failed
- * 
- * @apiExample {json} Request Example:
- * {
- *   "items": [{"productId": "123", "quantity": 2}],
- *   "shippingAddress": "123 Main St, City, State 12345",
- *   "paymentMethod": "stripe"
- * }
- */
-```
-
-## Documentation Maintenance
-
-### Review Schedule
-- Weekly: Update inline documentation for new features
-- Monthly: Review and update component READMEs
-- Quarterly: Full documentation audit and improvements
-- Annually: Documentation standards review and updates
-
-### Quality Checklist
-- [ ] All public functions have JSDoc comments
-- [ ] Components have usage examples
-- [ ] Breaking changes are documented
-- [ ] API changes are documented
-- [ ] Performance implications are noted
-- [ ] Accessibility considerations are included
-- [ ] Security implications are documented
+_This document should be reviewed quarterly and updated as standards evolve._
