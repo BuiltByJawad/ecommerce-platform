@@ -102,6 +102,16 @@ const OrderSchema = new Schema(
         type: Number,
         required: true,
       },
+      discount: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      tax: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
       total: {
         type: Number,
         required: true,
@@ -133,6 +143,10 @@ const OrderSchema = new Schema(
     },
     transactionId: {
       type: String,
+    },
+    couponCode: {
+      type: String,
+      trim: true,
     },
   },
   {

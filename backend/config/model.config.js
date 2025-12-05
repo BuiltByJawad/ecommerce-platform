@@ -7,6 +7,8 @@ import Analytics from "../modules/analytics/models/analytics.model.js";
 import Category from "../modules/categories/models/category.model.js";
 import Country from "../modules/countries/models/country.model.js";
 import OrderDetails from "../modules/orderDetails/models/orderDetail.model.js";
+import ShippingSetting from "../modules/shipping/models/shippingSetting.model.js";
+import TaxSetting from "../modules/taxes/models/taxSetting.model.js";
 
 const models = {
   User,
@@ -18,6 +20,8 @@ const models = {
   Category,
   Country,
   OrderDetails,
+  ShippingSetting,
+  TaxSetting,
 };
 
 export default models;

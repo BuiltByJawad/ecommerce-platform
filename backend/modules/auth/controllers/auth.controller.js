@@ -92,6 +92,7 @@ export const register = async (req, res) => {
           cartItems: newUser.cartItems,
           role: newUser.role,
           isVerified: newUser.isVerified,
+          permissions: newUser.permissions,
         },
       },
       res
@@ -191,6 +192,7 @@ export const registerBusiness = async (req, res) => {
           role: newBusiness.role,
           isVerified: newBusiness.isVerified,
           vendorStatus: newBusiness.vendorStatus,
+          permissions: newBusiness.permissions,
         },
       },
       res
@@ -230,6 +232,7 @@ export const login = async (req, res) => {
             role: user.role,
             isVerified: user.isVerified,
             vendorStatus: user.vendorStatus,
+            permissions: user.permissions,
           },
         },
         res
@@ -342,6 +345,7 @@ export const verifyCode = async (req, res) => {
           cartItems: user.cartItems,
           role: user.role,
           isVerified: user.isVerified,
+          permissions: user.permissions,
         },
       },
       res
@@ -376,14 +380,11 @@ export const resendCode = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    successResponse(
-      200,
-      "SUCCESS",
-      {
-        userInfo: req.user,
-      },
-      res
-    );
+    const safeUser = req.user?.toObject ? req.user.toObject() : req.user;
+    if (safeUser) {
+      delete safeUser.password;
+    }
+    successResponse(200, "SUCCESS", { userInfo: safeUser }, res);
   } catch (err) {
     errorResponse(
       500,

@@ -13,6 +13,7 @@ import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useAxios from '@/context/axiosContext';
 import { useTheme } from 'next-themes';
+import { useAppSelector } from '../../../redux';
 
 interface VendorOrderItem {
   productId: string;
@@ -38,11 +39,20 @@ const Orders: React.FC = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const { get, loading } = useAxios();
+  const user = useAppSelector((state) => state.global.currentUser as any);
+  const isVendor = user?.role === 'company';
+  const vendorStatus = user?.vendorStatus as 'pending' | 'approved' | 'rejected' | 'suspended' | undefined;
+  const permissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
+  const hasOrderPermission = permissions.length === 0 || permissions.includes('VIEW_VENDOR_ORDERS');
 
   useEffect(() => {
     const fetchOrders = async () => {
+      if (isVendor && (!hasOrderPermission || vendorStatus !== 'approved')) {
+        setOrders([]);
+        return;
+      }
       try {
-        const response = await get('/order-details/vendor/my');
+        const response = await get('/order-details/vendor/my', {});
         if (response?.status === 200) {
           setOrders(response?.data?.data?.orders || []);
         }
@@ -52,7 +62,7 @@ const Orders: React.FC = () => {
       }
     };
     fetchOrders();
-  }, []);
+  }, [get, isVendor, hasOrderPermission, vendorStatus]);
 
   const formatPrice = useCallback(
     (price: number) =>
@@ -183,7 +193,7 @@ const Orders: React.FC = () => {
       }),
       // Vendors do not change global order status; no actions column
     ];
-  }, [formatDate, formatPrice, getStatusColor, updateOrderStatus]);
+  }, [formatDate, formatPrice, getStatusColor]);
 
   const table = useReactTable({
     data: orders,
@@ -194,6 +204,26 @@ const Orders: React.FC = () => {
     getSortedRowModel: getSortedRowModel(),
     defaultColumn: { minSize: 40, size: 100, maxSize: 400 },
   });
+
+  if (isVendor && (!hasOrderPermission || vendorStatus !== 'approved')) {
+    return (
+      <div className={`${theme} max-w-3xl mx-auto p-4 bg-yellow-50 dark:bg-gray-900 min-h-screen flex items-center`}>
+        <div className='w-full rounded-lg border border-yellow-200 dark:border-yellow-700 bg-white dark:bg-gray-800 p-4 text-sm text-gray-800 dark:text-gray-100'>
+          <h2 className='text-base font-semibold mb-2'>Access to Orders is restricted</h2>
+          {vendorStatus !== 'approved' ? (
+            <p className='mb-1'>
+              Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You cannot view orders until your account is approved by an administrator.
+            </p>
+          ) : (
+            <p className='mb-1'>
+              Your account is approved but does not currently have permission to view orders. Please contact the administrator to enable <span className='font-semibold'>VIEW_VENDOR_ORDERS</span>.
+            </p>
+          )}
+          <p className='text-xs text-gray-600 dark:text-gray-300'>If this is unexpected, contact support or your account representative.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

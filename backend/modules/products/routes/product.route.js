@@ -5,6 +5,7 @@ import {
   adminRoute,
   companyRoute,
   protectedRoute,
+  requirePermission,
   verifyToken,
 } from "../../../middlewares/authJwt.js";
 
@@ -14,6 +15,7 @@ productRouter.post(
   "/create",
   protectedRoute,
   companyRoute,
+  requirePermission("MANAGE_PRODUCTS"),
   productController.createProduct
 );
 
@@ -22,6 +24,7 @@ productRouter.get(
   "/mine",
   protectedRoute,
   companyRoute,
+  requirePermission("MANAGE_PRODUCTS"),
   productController.getMyProducts
 );
 
@@ -84,6 +87,7 @@ productRouter.put(
   "/company/:id",
   protectedRoute,
   companyRoute,
+  requirePermission("MANAGE_PRODUCTS"),
   productController.updateProduct
 );
 productRouter.delete(

@@ -57,10 +57,13 @@ export const createOrderDetails = async (req, res) => {
       orderSummary: {
         itemsSubtotal: orderSummary.itemsSubtotal,
         shipping: orderSummary.shipping,
+        discount: orderSummary.discount || 0,
+        tax: orderSummary.tax || 0,
         total: orderSummary.total,
       },
       paymentMethod,
       status: "Pending",
+      couponCode: req.body?.couponCode,
     };
 
     const orderDetails = await OrderDetails.create(newOrderDetailsData);
@@ -259,81 +262,21 @@ export const findAllOrderDetails = async (req, res) => {
 };
 
 export const findOneOrderDetails = async (req, res) => {
-  //   console.log("this", req.body);
-  //   return;
   try {
-    const {
-      firstName,
-      lastName,
-      address,
-      city,
-      country,
-      phone,
-      email,
-      orderNotes,
-      orderItems,
-      orderSummary,
-      paymentMethod,
-    } = req.body;
-
-    if (
-      !firstName ||
-      !lastName ||
-      !address ||
-      !city ||
-      !country ||
-      !phone ||
-      !email ||
-      !paymentMethod ||
-      !orderItems ||
-      !orderSummary
-    ) {
-      return errorResponse(400, "BAD_REQUEST", "Missing required fields", res);
+    const { id } = req.params;
+    if (!id) {
+      return errorResponse(400, "BAD_REQUEST", "Order ID is required", res);
     }
-
-    const newOrderDetailsData = {
-      firstName,
-      lastName,
-      address,
-      city,
-      country,
-      phone,
-      email,
-      orderNotes: orderNotes || "",
-      orderItems: orderItems.map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        subtotal: item.subtotal,
-        quantity: item.quantity,
-      })),
-      orderSummary: {
-        itemsSubtotal: orderSummary.itemsSubtotal,
-        shipping: orderSummary.shipping,
-        total: orderSummary.total,
-      },
-      paymentMethod,
-      status: "Pending",
-    };
-
-    const orderDetails = await OrderDetails.create(newOrderDetailsData);
-
-    successResponse(
-      201,
-      "SUCCESS",
-      {
-        orderDetails,
-        message: "Order created successfully",
-      },
-      res
-    );
+    const order = await OrderDetails.findById(id);
+    if (!order) {
+      return errorResponse(404, "NOT_FOUND", "Order not found", res);
+    }
+    return successResponse(200, "SUCCESS", { order }, res);
   } catch (err) {
-    console.log("this", err);
-    console.error("Error creating order:", err);
     errorResponse(
       500,
       "SERVER_ERROR",
-      err.message || "An unexpected error occurred while creating the order.",
+      err.message || "An unexpected error occurred while fetching the order.",
       res
     );
   }

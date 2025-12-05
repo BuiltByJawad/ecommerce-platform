@@ -5,6 +5,7 @@ import {
   adminRoute,
   companyRoute,
   protectedRoute,
+  requirePermission,
 } from "../../../middlewares/authJwt.js";
 
 const orderDetailsRouter = express.Router();
@@ -17,6 +18,7 @@ orderDetailsRouter.get(
   "/vendor/my",
   protectedRoute,
   companyRoute,
+  requirePermission("VIEW_VENDOR_ORDERS"),
   orderDetailsController.getVendorOrders
 );
 orderDetailsRouter.post(

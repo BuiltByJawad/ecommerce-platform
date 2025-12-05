@@ -33,6 +33,18 @@ userRouter.put(
   adminRoute,
   userController.adminUpdateVendorStatus
 );
+userRouter.get(
+  "/admin/vendors/:id/permissions",
+  protectedRoute,
+  adminRoute,
+  userController.adminGetVendorPermissions
+);
+userRouter.put(
+  "/admin/vendors/:id/permissions",
+  protectedRoute,
+  adminRoute,
+  userController.adminUpdateVendorPermissions
+);
 export default (app) => {
   app.use("/api/users", userRouter);
 };

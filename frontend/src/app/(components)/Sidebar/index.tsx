@@ -24,6 +24,7 @@ const Sidebar = () => {
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const user = useAppSelector((state) => state.global.currentUser as any);
+  const permissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
   const { theme } = useTheme();
   const [showLogo, setShowLogo] = useState(!isSidebarCollapsed);
 
@@ -103,61 +104,124 @@ const Sidebar = () => {
           label='Dashboard'
           isCollapsed={isSidebarCollapsed}
         />
-        <SidebarLink
-          href='/admin/products/categories'
-          icon={Grid3X3}
-          label='Categories'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/admin/products/moderation'
-          icon={Package}
-          label='Moderation'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/business/products'
-          icon={Package}
-          label='Products'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/business/orders'
-          icon={ShoppingCart}
-          label='Orders'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink href='/users' icon={Users} label='Users' isCollapsed={isSidebarCollapsed} />
-        <SidebarLink
-          href='/admin/companies'
-          icon={Building}
-          label='Companies'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/payments'
-          icon={CircleDollarSign}
-          label='Payments'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/transactions'
-          icon={CreditCard}
-          label='Transactions'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/admin/permissions'
-          icon={UserCog}
-          label='Role Permissions'
-          isCollapsed={isSidebarCollapsed}
-        />
-        <SidebarLink
-          href='/admin/settings'
-          icon={SlidersHorizontal}
-          label='Settings'
-          isCollapsed={isSidebarCollapsed}
-        />
+
+        {/* Admin-only links */}
+        {user?.role === 'admin' && (
+          <>
+            <SidebarLink
+              href='/admin/products/categories'
+              icon={Grid3X3}
+              label='Categories'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/products/moderation'
+              icon={Package}
+              label='Moderation'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/users'
+              icon={Users}
+              label='Users'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/companies'
+              icon={Building}
+              label='Companies'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/payments'
+              icon={CircleDollarSign}
+              label='Payments'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/transactions'
+              icon={CreditCard}
+              label='Transactions'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/permissions'
+              icon={UserCog}
+              label='Role Permissions'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/coupons'
+              icon={CreditCard}
+              label='Coupons'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/shipping'
+              icon={SlidersHorizontal}
+              label='Shipping'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/taxes'
+              icon={SlidersHorizontal}
+              label='Taxes'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/settings'
+              icon={SlidersHorizontal}
+              label='Settings'
+              isCollapsed={isSidebarCollapsed}
+            />
+          </>
+        )}
+
+        {/* Company (vendor) links, gated by vendorStatus and permissions */}
+        {user?.role === 'company' && user?.vendorStatus === 'approved' && (
+          <>
+            {(permissions.length === 0 || permissions.includes('MANAGE_PRODUCTS')) && (
+              <SidebarLink
+                href='/business/products'
+                icon={Package}
+                label='Products'
+                isCollapsed={isSidebarCollapsed}
+              />
+            )}
+            {(permissions.length === 0 || permissions.includes('VIEW_VENDOR_ORDERS')) && (
+              <SidebarLink
+                href='/business/orders'
+                icon={ShoppingCart}
+                label='Orders'
+                isCollapsed={isSidebarCollapsed}
+              />
+            )}
+            {(permissions.length === 0 || permissions.includes('MANAGE_COUPONS')) && (
+              <SidebarLink
+                href='/business/coupons'
+                icon={CreditCard}
+                label='Coupons'
+                isCollapsed={isSidebarCollapsed}
+              />
+            )}
+            {(permissions.length === 0 || permissions.includes('MANAGE_PRODUCTS')) && (
+              <SidebarLink
+                href='/business/shipping'
+                icon={SlidersHorizontal}
+                label='Shipping'
+                isCollapsed={isSidebarCollapsed}
+              />
+            )}
+            {(permissions.length === 0 || permissions.includes('MANAGE_PRODUCTS')) && (
+              <SidebarLink
+                href='/business/taxes'
+                icon={SlidersHorizontal}
+                label='Taxes'
+                isCollapsed={isSidebarCollapsed}
+              />
+            )}
+          </>
+        )}
       </div>
 
       {/* FOOTER */}
