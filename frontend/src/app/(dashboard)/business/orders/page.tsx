@@ -14,21 +14,20 @@ import { toast } from 'react-toastify';
 import useAxios from '@/context/axiosContext';
 import { useTheme } from 'next-themes';
 
+interface VendorOrderItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  subtotal: number;
+}
+
 interface Order {
   _id: string;
-  user: {
-    firstName: string;
-    lastName: string;
-  };
-  address: {
-    country: string;
-    city: string;
-    address: string;
-  };
-  orderSummary: {
-    total: number;
-  };
+  customerEmail: string;
+  items: VendorOrderItem[];
+  totalForVendor: number;
   status: 'Pending' | 'Complete' | 'Shipped' | 'Delivered' | 'Cancelled';
+  paymentMethod: string;
   createdAt: string;
 }
 
@@ -38,14 +37,14 @@ const Orders: React.FC = () => {
   const { theme } = useTheme();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const { get, post, loading } = useAxios();
+  const { get, loading } = useAxios();
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await get('/order-details/findall');
-        if (response?.status === 201) {
-          setOrders(response?.data?.data?.orderDetails || []);
+        const response = await get('/order-details/vendor/my');
+        if (response?.status === 200) {
+          setOrders(response?.data?.data?.orders || []);
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
@@ -95,37 +94,13 @@ const Orders: React.FC = () => {
     }
   }, []);
 
-  const updateOrderStatus = useCallback(
-    async (orderId: string, newStatus: Order['status']) => {
-      try {
-        const response = await post(`/order-details/update-status/${orderId}`, {
-          status: newStatus,
-        });
-        if (response?.status === 200) {
-          setOrders((prevOrders) =>
-            prevOrders.map((order) =>
-              order._id === orderId ? { ...order, status: newStatus } : order
-            )
-          );
-          toast.success('Order status updated successfully!');
-        }
-      } catch (error) {
-        console.error('Error updating order status:', error);
-        toast.error('Failed to update order status');
-      }
-    },
-    [post]
-  );
-
   const columns = useMemo((): ColumnDef<Order, any>[] => {
     return [
       columnHelper.accessor(
-        (row) => {
-          return `${row?.firstName} ${row?.lastName}`;
-        },
+        (row) => row.customerEmail,
         {
-          id: 'userName',
-          header: 'Customer',
+          id: 'customerEmail',
+          header: 'Customer Email',
           cell: (info) => (
             <div className='font-medium text-gray-800 hover:text-indigo-600 transition-colors truncate'>
               {info.getValue()}
@@ -137,24 +112,27 @@ const Orders: React.FC = () => {
         }
       ),
       columnHelper.accessor(
-        (row) => ({
-          country: row?.country,
-          city: row?.city,
-          address: row?.address,
-        }),
+        (row) => row.items,
         {
-          id: 'address',
-          header: 'Address',
+          id: 'items',
+          header: 'Items',
           cell: (info) => {
-            const addressData = info.getValue();
+            const items = info.getValue() as VendorOrderItem[];
             return (
               <div className='text-xs sm:text-sm text-gray-600 leading-relaxed max-w-full'>
-                <div className='font-medium break-words overflow-hidden'>
-                  {addressData?.address}
-                </div>
-                <div className='text-gray-500 mt-1 break-words overflow-hidden'>
-                  {addressData?.city}, {addressData?.country}
-                </div>
+                {items?.slice(0, 3).map((item) => (
+                  <div key={item.productId} className='flex justify-between'>
+                    <span>
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span>{formatPrice(item.subtotal)}</span>
+                  </div>
+                ))}
+                {items && items.length > 3 && (
+                  <div className='text-gray-500 mt-1 break-words overflow-hidden'>
+                    + {items.length - 3} more item(s)
+                  </div>
+                )}
               </div>
             );
           },
@@ -163,8 +141,8 @@ const Orders: React.FC = () => {
           maxSize: 250,
         }
       ),
-      columnHelper.accessor('orderSummary.total', {
-        header: 'Total',
+      columnHelper.accessor('totalForVendor', {
+        header: 'Total (for you)',
         cell: (info) => (
           <span className='text-xs sm:text-sm text-gray-600'>{formatPrice(info.getValue())}</span>
         ),
@@ -203,25 +181,7 @@ const Orders: React.FC = () => {
         minSize: 80,
         maxSize: 150,
       }),
-      columnHelper.display({
-        id: 'actions',
-        header: () => <div className='text-right pr-1 sm:pr-2'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-start'>
-            {row?.original?.status === 'Pending' && (
-              <button
-                onClick={() => updateOrderStatus(row?.original?._id, 'Complete')}
-                className='px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors'
-              >
-                Mark as Paid
-              </button>
-            )}
-          </div>
-        ),
-        size: 100,
-        minSize: 80,
-        maxSize: 120,
-      }),
+      // Vendors do not change global order status; no actions column
     ];
   }, [formatDate, formatPrice, getStatusColor, updateOrderStatus]);
 

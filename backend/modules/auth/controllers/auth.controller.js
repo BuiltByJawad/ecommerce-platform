@@ -24,13 +24,13 @@ const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("access_token", accessToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "lax" : "lax",
+    sameSite: "lax",
     maxAge: 15 * 60 * 1000,
   });
   res.cookie("refresh_token", refreshToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "lax" : "lax",
+    sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -167,6 +167,7 @@ export const registerBusiness = async (req, res) => {
       address: businessData.address,
       business_type: businessData.business_type,
       role: "company",
+      vendorStatus: "pending",
     });
 
     // Save the business to the database
@@ -189,6 +190,7 @@ export const registerBusiness = async (req, res) => {
           business_type: newBusiness.business_type,
           role: newBusiness.role,
           isVerified: newBusiness.isVerified,
+          vendorStatus: newBusiness.vendorStatus,
         },
       },
       res
@@ -227,6 +229,7 @@ export const login = async (req, res) => {
             cartItems: user.cartItems,
             role: user.role,
             isVerified: user.isVerified,
+            vendorStatus: user.vendorStatus,
           },
         },
         res

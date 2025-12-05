@@ -24,6 +24,11 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
+  // Allow vendor listing and vendor store publicly
+  if (pathname.startsWith('/vendors')) {
+    return NextResponse.next();
+  }
+
   // Allow password reset/forgot publicly
   if (pathname.startsWith('/reset-password') || pathname.startsWith('/forgot-password')) {
     return NextResponse.next();

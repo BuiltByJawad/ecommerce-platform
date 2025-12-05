@@ -37,6 +37,21 @@ export const createProduct = async (req, res) => {
       return errorResponse(400, "VALIDATION_ERROR", "Invalid category id", res);
     }
 
+    // Check if user is allowed to list in this category (for company users)
+    if (req.user && req.user.role === "company") {
+      if (categoryDoc.allowedUsers && categoryDoc.allowedUsers.length > 0) {
+        const userEmail = req.user.email;
+        if (!categoryDoc.allowedUsers.includes(userEmail)) {
+          return errorResponse(
+            403,
+            "FORBIDDEN",
+            `You are not authorized to list products in the "${categoryDoc.name}" category. This category is restricted to specific users.`,
+            res
+          );
+        }
+      }
+    }
+
     if (!imageFiles || imageFiles.length === 0) {
       return errorResponse(
         400,
@@ -111,17 +126,29 @@ export const createProduct = async (req, res) => {
     // Marketplace: set seller and moderation status for company users
     if (req.user && req.user.role === "company") {
       newProductData.seller = req.user._id;
-      newProductData.status = "pending";
+      // Check if category requires approval
+      if (categoryDoc.requiresApproval) {
+        newProductData.status = "pending"; // Requires admin approval
+      } else {
+        newProductData.status = "approved"; // Auto-approved
+      }
     }
 
     const product = await Product.create(newProductData);
+
+    const message = 
+      req.user && req.user.role === "company"
+        ? categoryDoc.requiresApproval
+          ? "Product submitted for review"
+          : "Product created and approved successfully"
+        : "Product created successfully";
 
     successResponse(
       201,
       "SUCCESS",
       {
         product,
-        message: "Product submitted for review",
+        message,
       },
       res
     );
@@ -193,12 +220,22 @@ export const updateProduct = async (req, res) => {
       batteryDescription,
     };
 
-    // Company updates should re-trigger moderation
+    // Company updates should re-trigger moderation based on category settings
     if (req.user?.role === "company") {
-      updateData.status = "pending";
-      updateData.approvedBy = undefined;
-      updateData.approvedAt = undefined;
-      updateData.rejectionReason = undefined;
+      // Check the product's category approval requirement
+      const categoryDoc = await Category.findById(existingProduct.category).lean();
+      if (categoryDoc) {
+        if (categoryDoc.requiresApproval) {
+          updateData.status = "pending";
+          updateData.approvedBy = undefined;
+          updateData.approvedAt = undefined;
+          updateData.rejectionReason = undefined;
+        }
+        // If category doesn't require approval, keep status as approved (unless it was rejected)
+        else if (existingProduct.status !== "rejected") {
+          updateData.status = "approved";
+        }
+      }
     }
 
     // Handle image updates if provided
@@ -749,29 +786,43 @@ export const getMyProducts = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const [products, total, distinctCategories] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
-      Product.countDocuments(query),
-      Product.distinct("category", query),
-    ]);
+    const [products, total, distinctCategories, pendingCount, approvedCount, rejectedCount] =
+      await Promise.all([
+        Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+        Product.countDocuments(query),
+        Product.distinct("category", query),
+        Product.countDocuments({ seller: req.user._id, status: "pending" }),
+        Product.countDocuments({ seller: req.user._id, status: "approved" }),
+        Product.countDocuments({ seller: req.user._id, status: "rejected" }),
+      ]);
 
     const totalPages = Math.ceil(total / limitNum) || 1;
 
-    successResponse(200, "SUCCESS", {
-      products,
-      pagination: {
-        currentPage: pageNum,
-        totalPages,
-        totalItems: total,
-        itemsPerPage: limitNum,
-        hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1,
+    successResponse(
+      200,
+      "SUCCESS",
+      {
+        products,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limitNum,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+        totals: {
+          products: total,
+          categories: distinctCategories.length,
+        },
+        statusTotals: {
+          pending: pendingCount,
+          approved: approvedCount,
+          rejected: rejectedCount,
+        },
       },
-      totals: {
-        products: total,
-        categories: distinctCategories.length,
-      },
-    }, res);
+      res
+    );
   } catch (err) {
     errorResponse(500, "ERROR", err.message || "Failed to fetch seller products", res);
   }
@@ -799,7 +850,7 @@ export const listPendingProducts = async (req, res) => {
       Product.countDocuments(criteria),
     ]);
 
-    const totalPages = Math.max(1, Math.ceil(total / limitNum) || 1);
+    const totalPages = Math.ceil(total / limitNum) || 1;
 
     successResponse(200, "SUCCESS", {
       products,

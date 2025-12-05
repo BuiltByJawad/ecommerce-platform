@@ -61,3 +61,56 @@ export const sendPasswordResetEmail = async (email, resetLink) => {
     throw new Error("Failed to send password reset email");
   }
 };
+
+export const sendVendorStatusEmail = async (email, status) => {
+  if (!email || !status) return;
+
+  let subject = "Your vendor account status has changed";
+  let message = "";
+  const adminContactEmail = process.env.ADMIN_CONTACT_EMAIL || process.env.SMTP_FROM_EMAIL;
+
+  switch (status) {
+    case "approved":
+      subject = "Your vendor account has been approved";
+      message =
+        "Congratulations! Your vendor account has been approved. You can now create and manage products and receive orders on the platform.";
+      break;
+    case "pending":
+      subject = "Your vendor application is under review";
+      message =
+        "Your vendor application is currently under review. You will be able to list products once an administrator approves your account.";
+      break;
+    case "rejected":
+      subject = "Your vendor application was rejected";
+      message =
+        "We are sorry to inform you that your vendor application was rejected. If you believe this is an error or need clarification, please contact support.";
+      break;
+    case "suspended":
+      subject = "Your vendor account has been suspended";
+      message =
+        "Your vendor account has been suspended. You cannot list or manage products until this is resolved. Please contact support for more information.";
+      break;
+    default:
+      message = `Your vendor account status is now: ${status}.`;
+  }
+
+  // Append admin contact information for follow-up queries
+  if (adminContactEmail) {
+    message += ` If you have any questions, please contact the platform administrator at ${adminContactEmail}.`;
+  }
+
+  try {
+    const mailOptions = {
+      from: `${process.env.SMTP_FROM_EMAIL}`,
+      to: email,
+      subject,
+      text: message,
+      html: `<p>${message}</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending vendor status email:", error);
+    // Do not throw: status update should still succeed even if email fails
+  }
+};

@@ -60,6 +60,11 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    vendorStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "suspended"],
+      default: "pending",
+    },
   },
   {
     collection: "users",
