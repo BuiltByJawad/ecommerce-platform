@@ -15,6 +15,7 @@ export interface ProductImageUploaderProps {
 
 export interface DecodedToken {
   userRole: string;
+  userVerified: boolean;
 }
 
 export interface RoleRoutes {
@@ -29,10 +30,31 @@ export interface User {
   isVerified: boolean;
   l_name: string;
   role: string;
+  company_name?: string;
+  tax_id?: string;
+  phone?: string;
+  address?: string;
+  business_type?: string;
+  vendorStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
 }
 
 export interface UserState {
   currentUser: User | null;
+}
+
+export interface Vendor {
+  _id: string;
+  f_name?: string;
+  l_name?: string;
+  email: string;
+  company_name?: string;
+  tax_id?: string;
+  phone?: string;
+  address?: string;
+  business_type?: string;
+  isVerified?: boolean;
+  vendorStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  createdAt?: string;
 }
 
 export interface Attribute {

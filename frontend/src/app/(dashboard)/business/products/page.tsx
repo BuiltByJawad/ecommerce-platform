@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   createColumnHelper,
   flexRender,
@@ -16,12 +16,15 @@ import Loading from '@/app/loading';
 import Image from 'next/image';
 import Pagination from '@/app/(components)/Pagination';
 import { Search, X } from 'lucide-react';
+import { useAppSelector } from '../../../redux';
 
 const columnHelper = createColumnHelper<Product>();
 
 const ProductsPage = () => {
   const { get } = useAxios();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useAppSelector((state) => state.global.currentUser as any);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -35,6 +38,18 @@ const ProductsPage = () => {
     products: 0,
     categories: 0,
   });
+
+  const isVendor = user?.role === 'company';
+  const vendorStatus = user?.vendorStatus as 'pending' | 'approved' | 'rejected' | 'suspended' | undefined;
+  const canManageProducts = !isVendor || vendorStatus === 'approved';
+
+  // Initialize status filter from URL (?status=pending|approved|rejected)
+  useEffect(() => {
+    const initialStatus = searchParams.get('status');
+    if (initialStatus && ['pending', 'approved', 'rejected'].includes(initialStatus)) {
+      setStatusFilter(initialStatus);
+    }
+  }, [searchParams]);
 
   const badge = (status?: Product['status'], reason?: string) => {
     const classes =
@@ -144,12 +159,16 @@ const ProductsPage = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!canManageProducts) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       await fetchProducts(currentPage, pageSize);
       setIsLoading(false);
     };
     loadData();
-  }, [fetchProducts, currentPage, pageSize]);
+  }, [fetchProducts, currentPage, pageSize, canManageProducts]);
 
   const categoriesFromProducts = useMemo(() => {
     const map = new Map<string, string>();
@@ -187,6 +206,23 @@ const ProductsPage = () => {
   const handleAddProduct = () => {
     router.push('/business/products/add');
   };
+
+  if (isVendor && !canManageProducts) {
+    return (
+      <div className='max-w-3xl mx-auto p-4 bg-yellow-50 dark:bg-gray-900 min-h-screen flex items-center'>
+        <div className='w-full rounded-lg border border-yellow-200 dark:border-yellow-700 bg-white dark:bg-gray-800 p-4 text-sm text-gray-800 dark:text-gray-100'>
+          <h2 className='text-base font-semibold mb-2'>Vendor account not approved</h2>
+          <p className='mb-1'>
+            Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You
+            cannot manage products until your account is approved by an administrator.
+          </p>
+          <p className='text-xs text-gray-600 dark:text-gray-300'>
+            Please wait for the review to complete or contact support if you believe this is an error.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return isLoading ? (
     <Loading />

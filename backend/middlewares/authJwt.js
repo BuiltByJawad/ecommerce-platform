@@ -52,6 +52,11 @@ export const adminRoute = (req, res, next) => {
 
 export const companyRoute = (req, res, next) => {
   if (req.user && req.user.role === "company") {
+    if (req.user.vendorStatus && req.user.vendorStatus !== "approved") {
+      return res
+        .status(403)
+        .json({ message: "Access denied - Vendor account not approved or is disabled" });
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied" });

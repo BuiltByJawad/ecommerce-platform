@@ -7,7 +7,6 @@ import {
   protectedRoute,
   verifyToken,
 } from "../../../middlewares/authJwt.js";
-import { requirePermission } from "../../../middlewares/permissionGuard.js";
 
 const productRouter = express.Router();
 
@@ -15,7 +14,6 @@ productRouter.post(
   "/create",
   protectedRoute,
   companyRoute,
-  requirePermission("products", "add"),
   productController.createProduct
 );
 
@@ -24,7 +22,6 @@ productRouter.get(
   "/mine",
   protectedRoute,
   companyRoute,
-  requirePermission("products", "view"),
   productController.getMyProducts
 );
 
@@ -33,21 +30,18 @@ productRouter.get(
   "/moderation/pending",
   protectedRoute,
   adminRoute,
-  requirePermission("moderation", "view"),
   productController.listPendingProducts
 );
 productRouter.put(
   "/moderation/approve/:id",
   protectedRoute,
   adminRoute,
-  requirePermission("moderation", "edit"),
   productController.approveProduct
 );
 productRouter.put(
   "/moderation/reject/:id",
   protectedRoute,
   adminRoute,
-  requirePermission("moderation", "edit"),
   productController.rejectProduct
 );
 
@@ -76,7 +70,6 @@ productRouter.get(
   "/mine/:id",
   protectedRoute,
   companyRoute,
-  requirePermission("products", "view"),
   productController.getMyProductById
 );
 productRouter.put(
@@ -91,7 +84,6 @@ productRouter.put(
   "/company/:id",
   protectedRoute,
   companyRoute,
-  requirePermission("products", "edit"),
   productController.updateProduct
 );
 productRouter.delete(

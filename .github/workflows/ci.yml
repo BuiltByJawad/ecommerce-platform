@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies (root)
+        run: npm ci --ignore-scripts
+
+      - name: Install dependencies (workspaces)
+        run: |
+          npm ci --ignore-scripts -w backend
+          npm ci --ignore-scripts -w frontend
+
+      - name: Lint
+        run: npm run lint --if-present -ws
+
+      - name: Typecheck
+        run: npm run typecheck --if-present -ws
+
+      - name: Test
+        run: npm run test --if-present -ws
+
+      - name: Build
+        run: npm run build --if-present -ws
+
+      - name: Audit (non-blocking)
+        run: |
+          npm audit --omit=dev || true

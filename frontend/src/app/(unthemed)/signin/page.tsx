@@ -26,6 +26,8 @@ export default function Login() {
       try {
         const response = await post('/login', values);
         if (response?.status === 200) {
+          const user = response?.data?.data?.user;
+          dispatch(setCurrentUser(user));
           toast.dismiss();
           toast.success(`Logging in...`, {
             position: 'top-right',
@@ -36,17 +38,15 @@ export default function Login() {
             draggable: true,
             progress: undefined,
             theme: 'light',
-            onClose: () => {
-              dispatch(setCurrentUser(response?.data?.data?.user));
-              if (response?.data?.data?.user?.role === 'admin') {
-                router.push('/admin');
-              } else if (response?.data?.data?.user?.role === 'company') {
-                router.push('/business');
-              } else if (response?.data?.data?.user?.role === 'customer') {
-                router.push('/home');
-              }
-            },
           });
+          console.log(user.role);
+          if (user?.role === 'admin') {
+            router.push('/admin');
+          } else if (user?.role === 'company') {
+            router.push('/business');
+          } else if (user?.role === 'customer') {
+            router.push('/home');
+          }
         }
       } catch (error) {
         console.log(error);

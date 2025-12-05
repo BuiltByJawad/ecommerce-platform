@@ -12,6 +12,13 @@ const orderDetailsRouter = express.Router();
 orderDetailsRouter.post("/create", orderDetailsController.createOrderDetails);
 orderDetailsRouter.get("/findall", orderDetailsController.findAllOrderDetails);
 orderDetailsRouter.get("/:id", orderDetailsController.findOneOrderDetails);
+orderDetailsRouter.get("/my", protectedRoute, orderDetailsController.getMyOrders);
+orderDetailsRouter.get(
+  "/vendor/my",
+  protectedRoute,
+  companyRoute,
+  orderDetailsController.getVendorOrders
+);
 orderDetailsRouter.post(
   "/update-status/:orderId",
   orderDetailsController.updateOrderDetails
