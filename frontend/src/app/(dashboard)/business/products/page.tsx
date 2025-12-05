@@ -41,7 +41,9 @@ const ProductsPage = () => {
 
   const isVendor = user?.role === 'company';
   const vendorStatus = user?.vendorStatus as 'pending' | 'approved' | 'rejected' | 'suspended' | undefined;
-  const canManageProducts = !isVendor || vendorStatus === 'approved';
+  const permissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
+  const hasManagePermission = permissions.length === 0 || permissions.includes('MANAGE_PRODUCTS');
+  const canManageProducts = (!isVendor || vendorStatus === 'approved') && hasManagePermission;
 
   // Initialize status filter from URL (?status=pending|approved|rejected)
   useEffect(() => {
@@ -207,17 +209,24 @@ const ProductsPage = () => {
     router.push('/business/products/add');
   };
 
-  if (isVendor && !canManageProducts) {
+  if (isVendor && (!hasManagePermission || vendorStatus !== 'approved')) {
     return (
       <div className='max-w-3xl mx-auto p-4 bg-yellow-50 dark:bg-gray-900 min-h-screen flex items-center'>
         <div className='w-full rounded-lg border border-yellow-200 dark:border-yellow-700 bg-white dark:bg-gray-800 p-4 text-sm text-gray-800 dark:text-gray-100'>
-          <h2 className='text-base font-semibold mb-2'>Vendor account not approved</h2>
-          <p className='mb-1'>
-            Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You
-            cannot manage products until your account is approved by an administrator.
-          </p>
+          <h2 className='text-base font-semibold mb-2'>Access to Products is restricted</h2>
+          {vendorStatus !== 'approved' ? (
+            <p className='mb-1'>
+              Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You cannot
+              manage products until your account is approved by an administrator.
+            </p>
+          ) : (
+            <p className='mb-1'>
+              Your account is approved but does not currently have permission to manage products. Please contact the
+              administrator to enable <span className='font-semibold'>MANAGE_PRODUCTS</span>.
+            </p>
+          )}
           <p className='text-xs text-gray-600 dark:text-gray-300'>
-            Please wait for the review to complete or contact support if you believe this is an error.
+            If this is unexpected, contact support or your account representative.
           </p>
         </div>
       </div>

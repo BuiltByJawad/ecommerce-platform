@@ -6,7 +6,7 @@ import * as Yup from 'yup';
 import { CreditCard, Lock } from 'lucide-react';
 import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useAppSelector, useAppDispatch } from '@/app/redux';
@@ -31,16 +31,25 @@ const OrderDetails = () => {
   const dispatch = useAppDispatch();
   const { get, post } = useAxios();
   const { theme } = useTheme();
-  const [countries, setCountries] = useState([]);
+  const searchParams = useSearchParams();
+  type Country = { _id?: string; country_name: string; shipping_rate: number | string };
+  const [countries, setCountries] = useState<Country[]>([]);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [_isLoading, _setIsLoading] = useState(true);
+  const [couponCode, setCouponCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [shipping, setShipping] = useState(5.0 as number);
+  const [quoting, setQuoting] = useState(false);
+  const [tax, setTax] = useState(0 as number);
+  const [computingTax, setComputingTax] = useState(false);
   const cartItemsFromStore = useAppSelector((state) => state.global.cartItems);
-  const cartItems = Object.values(cartItemsFromStore);
+  const cartItems: any[] = Object.values(cartItemsFromStore as any);
 
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await get('/countries');
+        const response = await get('/countries', {});
         setCountries(
           Array?.isArray(response?.data?.data?.countries) ? response?.data?.data?.countries : []
         );
@@ -59,6 +68,22 @@ const OrderDetails = () => {
     fetchCountries();
   }, []);
 
+  // Prefill coupon code from URL
+  useEffect(() => {
+    const c = searchParams?.get('coupon');
+    if (c) {
+      setCouponCode(c);
+    }
+  }, [searchParams]);
+
+  // Auto-apply coupon when present and items loaded
+  useEffect(() => {
+    if (couponCode && cartItems.length > 0 && discount === 0) {
+      handleApplyCoupon();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couponCode, cartItems.length]);
+
   // Calculate subtotal dynamically
   const itemsSubtotal = cartItems
     .reduce((total, item) => total + parseFloat(item?.product?.price || 0) * item.quantity, 0)
@@ -66,28 +91,103 @@ const OrderDetails = () => {
 
   // Get shipping rate for selected country
   const selectedCountryData = Array?.isArray(countries)
-    ? countries?.find((country) => country?.country_name === selectedCountry)
+    ? countries?.find((country: Country) => country?.country_name === selectedCountry)
     : null;
-  const shippingRate = selectedCountryData
-    ? parseFloat(selectedCountryData?.shipping_rate?.toString()) || 5.0
-    : 5.0;
+  const shippingRate = shipping;
+
+  // Quote shipping whenever country or items change
+  useEffect(() => {
+    const doQuote = async () => {
+      try {
+        setQuoting(true);
+        const items = cartItems.map((item: any) => ({
+          price: parseFloat(item?.product?.price || 0),
+          quantity: item.quantity,
+          seller: item?.product?.seller,
+        }));
+        const resp = await post('/shipping/quote', { country: selectedCountry, items }, {});
+        const total = Number(resp?.data?.data?.totalShipping ?? 5.0);
+        setShipping(Number(total.toFixed(2)));
+      } catch (e) {
+        setShipping(5.0);
+      } finally {
+        setQuoting(false);
+      }
+    };
+    if (selectedCountry && cartItems.length > 0) {
+      doQuote();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry, cartItems.length]);
+
+  // Compute tax whenever country, items or discount change
+  useEffect(() => {
+    const doTax = async () => {
+      try {
+        setComputingTax(true);
+        const items = cartItems.map((item: any) => ({
+          price: parseFloat(item?.product?.price || 0),
+          quantity: item.quantity,
+          seller: item?.product?.seller,
+        }));
+        const resp = await post('/taxes/compute', { country: selectedCountry, items, discount }, {});
+        const t = Number(resp?.data?.data?.totalTax ?? 0);
+        setTax(Number(t.toFixed(2)));
+      } catch (e) {
+        setTax(0);
+      } finally {
+        setComputingTax(false);
+      }
+    };
+    if (selectedCountry && cartItems.length > 0) {
+      doTax();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry, cartItems.length, discount]);
 
   const order = {
     items: cartItems,
     summary: {
       itemsSubtotal: parseFloat(itemsSubtotal),
       shipping: shippingRate,
+      discount: discount,
+      tax: tax,
     },
   };
-  const grandTotal = (order.summary.itemsSubtotal + order.summary.shipping).toFixed(2);
+  const grandTotal = (
+    Math.max(order.summary.itemsSubtotal + order.summary.shipping - (order.summary.discount || 0) + (order.summary.tax || 0), 0)
+  ).toFixed(2);
 
-  const handleSSLCommerzPayment = async (orderData, customerData) => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    try {
+      setApplyingCoupon(true);
+      const items = cartItems.map((item: any) => ({
+        price: parseFloat(item?.product?.price || 0),
+        quantity: item.quantity,
+        seller: item?.product?.seller,
+      }));
+      const resp = await post('/coupons/apply', { code: couponCode, items }, {});
+      const d = Number(resp?.data?.data?.discount || 0);
+      setDiscount(Number(d.toFixed(2)));
+      toast.success('Coupon applied');
+    } catch (e: any) {
+      setDiscount(0);
+      toast.error(e?.response?.data?.data?.error || 'Invalid coupon');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleSSLCommerzPayment = async (orderData: any, customerData: any) => {
     try {
       const response = await post('/payments/initiate-ssl-commerz', {
         orderData: {
           total: parseFloat(grandTotal),
           subtotal: parseFloat(itemsSubtotal),
           shipping: shippingRate,
+          discount: discount,
+          tax: tax,
         },
         customerData,
         orderItems: cartItems.map((item) => ({
@@ -97,9 +197,10 @@ const OrderDetails = () => {
           quantity: item.quantity,
           subtotal: parseFloat(item?.product?.price || 0) * item.quantity,
         })),
-      });
+        couponCode: couponCode || undefined,
+      }, {});
       window.location.href = response.data.url;
-    } catch (error) {
+    } catch (error: any) {
       console.error('SSLCommerz payment error:', error);
       toast.error('Payment initialization failed. Please try again.', {
         position: 'top-right',
@@ -110,7 +211,7 @@ const OrderDetails = () => {
   };
 
   // Update your handlePlaceOrder function to handle SSLCommerz payments
-  const handlePlaceOrder = async (values, { setSubmitting, resetForm }) => {
+  const handlePlaceOrder = async (values: any, { setSubmitting, resetForm }: any) => {
     setSelectedCountry(values.country);
 
     try {
@@ -149,8 +250,11 @@ const OrderDetails = () => {
         orderSummary: {
           itemsSubtotal: parseFloat(itemsSubtotal),
           shipping: shippingRate,
+          discount: discount,
+          tax: tax,
           total: parseFloat(grandTotal),
         },
+        couponCode: couponCode || undefined,
       };
 
       const response = await post('/order-details/create', payload, {
@@ -169,7 +273,7 @@ const OrderDetails = () => {
           },
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error?.response?.data?.data?.error || 'Failed to place order', {
         position: 'top-right',
         autoClose: 1000,
@@ -253,7 +357,7 @@ const OrderDetails = () => {
                         name='country'
                         className='w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white 
                         dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition text-sm'
-                        onChange={(e) => {
+                        onChange={(e: any) => {
                           setFieldValue('country', e.target.value);
                           setSelectedCountry(e.target.value);
                         }}
@@ -390,9 +494,32 @@ const OrderDetails = () => {
                         <span>Shipping</span>
                         <span>${order.summary.shipping.toFixed(2)}</span>
                       </div>
+                      <div className='flex justify-between font-semibold'>
+                        <span>Discount</span>
+                        <span>${order.summary.discount.toFixed(2)}</span>
+                      </div>
                       <div className='flex justify-between font-bold text-lg'>
                         <span>Total</span>
                         <span>${grandTotal}</span>
+                      </div>
+                    </div>
+                    <div className='mt-4'>
+                      <div className='flex gap-2'>
+                        <input
+                          type='text'
+                          value={couponCode}
+                          onChange={(e: any) => setCouponCode(e.target.value)}
+                          placeholder='Coupon code'
+                          className='flex-1 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm'
+                        />
+                        <button
+                          type='button'
+                          onClick={handleApplyCoupon}
+                          disabled={applyingCoupon || !couponCode}
+                          className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg disabled:opacity-50'
+                        >
+                          {applyingCoupon ? 'Applying...' : 'Apply'}
+                        </button>
                       </div>
                     </div>
                     <div className='mt-8'>

@@ -28,6 +28,60 @@ export const findAll = async (req, res) => {
   }
 };
 
+export const adminGetVendorPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await User.findOne({ _id: id, role: "company" })
+      .select("permissions company_name email vendorStatus")
+      .lean();
+
+    if (!vendor) {
+      return errorResponse(404, "FAILED", "Vendor not found", res);
+    }
+
+    return successResponse(200, "SUCCESS", { vendor }, res);
+  } catch (err) {
+    return errorResponse(
+      500,
+      "ERROR",
+      err.message || "Failed to fetch vendor permissions",
+      res
+    );
+  }
+};
+
+export const adminUpdateVendorPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { permissions } = req.body;
+
+    if (!Array.isArray(permissions)) {
+      return errorResponse(400, "FAILED", "Permissions must be an array of strings", res);
+    }
+
+    const vendor = await User.findOneAndUpdate(
+      { _id: id, role: "company" },
+      { permissions },
+      { new: true }
+    )
+      .select("permissions company_name email vendorStatus")
+      .lean();
+
+    if (!vendor) {
+      return errorResponse(404, "FAILED", "Vendor not found", res);
+    }
+
+    return successResponse(200, "SUCCESS", { vendor }, res);
+  } catch (err) {
+    return errorResponse(
+      500,
+      "ERROR",
+      err.message || "Failed to update vendor permissions",
+      res
+    );
+  }
+};
+
 export const findOne = async (req, res) => {
   try {
     const id = req.params.id;

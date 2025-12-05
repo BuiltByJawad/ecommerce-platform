@@ -164,6 +164,17 @@ export const sslCommerzIpn = async (req, res) => {
       { status: "Complete", paymentMethod: "sslcommerz" },
       { new: true }
     );
+    // handle coupon usage
+    if (updatedOrder?.couponCode) {
+      const coupon = await Coupon.findOne({ code: updatedOrder.couponCode });
+      if (coupon) {
+        coupon.usedCount = (coupon.usedCount || 0) + 1;
+        if (coupon.usageLimitTotal && coupon.usedCount >= coupon.usageLimitTotal) {
+          coupon.isActive = false;
+        }
+        await coupon.save();
+      }
+    }
     successResponse(
       200,
       "SUCCESS",
@@ -180,7 +191,7 @@ export const sslCommerzIpn = async (req, res) => {
 
 export const initiateSslCommerzPayment = async (req, res) => {
   try {
-    const { orderData, customerData, orderItems } = req.body;
+    const { orderData, customerData, orderItems, couponCode } = req.body;
     const tran_id = uuidv4();
     const data = {
       total_amount: orderData.total,
@@ -225,11 +236,14 @@ export const initiateSslCommerzPayment = async (req, res) => {
       orderSummary: {
         itemsSubtotal: orderData.subtotal,
         shipping: orderData.shipping,
+        discount: orderData.discount || 0,
+        tax: orderData.tax || 0,
         total: orderData.total,
       },
       paymentMethod: "sslcommerz",
       status: "Pending",
       transactionId: tran_id,
+      couponCode: couponCode || undefined,
     };
 
     await OrderDetails.create(newOrderDetailsData);
@@ -259,6 +273,16 @@ export const paymentSuccess = async (req, res) => {
     );
     if (!updatedOrder) {
       return errorResponse(404, "ERROR", "Order not found", res);
+    }
+    if (updatedOrder?.couponCode) {
+      const coupon = await Coupon.findOne({ code: updatedOrder.couponCode });
+      if (coupon) {
+        coupon.usedCount = (coupon.usedCount || 0) + 1;
+        if (coupon.usageLimitTotal && coupon.usedCount >= coupon.usageLimitTotal) {
+          coupon.isActive = false;
+        }
+        await coupon.save();
+      }
     }
     res.redirect(`${process.env.NEXT_APP_FRONTEND}/`);
   } catch (error) {

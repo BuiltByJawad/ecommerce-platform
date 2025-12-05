@@ -36,6 +36,7 @@ export interface User {
   address?: string;
   business_type?: string;
   vendorStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  permissions?: string[];
 }
 
 export interface UserState {
@@ -136,7 +137,7 @@ export interface CartItem {
 
 export interface InitialStateTypes {
   isSidebarCollapsed: boolean;
-  currentUser: object;
+  currentUser: User | null;
   cartItems: {
     [key: string]: CartItem;
   };

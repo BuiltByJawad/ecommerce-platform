@@ -12,20 +12,26 @@ const AddProduct: React.FC = () => {
 
   const isVendor = user?.role === 'company';
   const vendorStatus = user?.vendorStatus as 'pending' | 'approved' | 'rejected' | 'suspended' | undefined;
-  const canCreateProducts = !isVendor || vendorStatus === 'approved';
+  const permissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
+  const hasManagePermission = permissions.length === 0 || permissions.includes('MANAGE_PRODUCTS');
+  const canCreateProducts = (!isVendor || vendorStatus === 'approved') && hasManagePermission;
 
   if (isVendor && !canCreateProducts) {
     return (
       <div className='min-h-screen max-w-3xl mx-auto flex items-center justify-center p-4'>
         <div className='w-full rounded-lg border border-yellow-200 dark:border-yellow-700 bg-white dark:bg-gray-800 p-4 text-sm text-gray-800 dark:text-gray-100'>
-          <h1 className='text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white'>Vendor account not approved</h1>
-          <p className='mb-1'>
-            Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You must
-            be approved before you can create new products.
-          </p>
+          <h1 className='text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white'>Access to Add Product is restricted</h1>
+          {vendorStatus !== 'approved' ? (
+            <p className='mb-1'>
+              Your vendor account status is <span className='font-semibold'>{vendorStatus || 'pending'}</span>. You must be approved before you can create new products.
+            </p>
+          ) : (
+            <p className='mb-1'>
+              Your account is approved but does not currently have permission to manage products. Please contact the administrator to enable <span className='font-semibold'>MANAGE_PRODUCTS</span>.
+            </p>
+          )}
           <p className='text-xs text-gray-600 dark:text-gray-300'>
-            Once your account is approved by an administrator, you will be able to add and manage products from this
-            page.
+            If this is unexpected, contact support or your account representative.
           </p>
         </div>
       </div>
@@ -47,7 +53,7 @@ const AddProduct: React.FC = () => {
               Add Product
             </h1>
           </div>
-          <AddProductForm theme={theme} router={router} />
+          <AddProductForm theme={theme || 'light'} router={router as any} />
         </div>
       </div>
     </div>

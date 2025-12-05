@@ -65,6 +65,10 @@ const UserSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "suspended"],
       default: "pending",
     },
+    permissions: {
+      type: [String],
+      default: [],
+    },
   },
   {
     collection: "users",

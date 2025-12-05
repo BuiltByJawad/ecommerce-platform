@@ -21,7 +21,7 @@ const Dashboard = () => {
     const fetchStatusSummary = async () => {
       if (!user || user.role !== 'company') return;
       try {
-        const res = await get('/products/my-products?limit=1');
+        const res = await get('/products/mine?limit=1', {});
         const data = res?.data?.data;
         if (data?.statusTotals) {
           setStatusTotals({

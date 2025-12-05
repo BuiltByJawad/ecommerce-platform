@@ -61,3 +61,16 @@ export const companyRoute = (req, res, next) => {
   }
   return res.status(403).json({ message: "Access denied" });
 };
+
+export const requirePermission = (permission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const perms = Array.isArray(req.user.permissions) ? req.user.permissions : [];
+    if (!perms.includes(permission)) {
+      return res.status(403).json({ message: "Access denied - Missing permission" });
+    }
+    return next();
+  };
+};

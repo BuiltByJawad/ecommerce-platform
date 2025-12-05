@@ -39,7 +39,7 @@ const OrdersPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await get('/order-details/my');
+        const res = await get('/order-details/my', {});
         const data = res?.data?.data;
         setOrders(Array.isArray(data?.orders) ? data.orders : []);
       } catch (e) {
@@ -118,6 +118,9 @@ const OrdersPage = () => {
                 </div>
                 <div className='mt-3 flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-3'>
                   <p className='text-sm font-semibold'>Total: ${order.orderSummary.total.toFixed(2)}</p>
+                  <Link href={`/customer/orders/${order._id}`} className='text-xs text-blue-600 hover:underline'>
+                    View details
+                  </Link>
                 </div>
               </div>
             ))}
