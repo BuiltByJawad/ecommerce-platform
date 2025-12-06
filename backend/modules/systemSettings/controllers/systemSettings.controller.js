@@ -14,6 +14,37 @@ export const getSystemSettings = async (_req, res) => {
   }
 };
 
+export const getPublicSystemSettings = async (_req, res) => {
+  try {
+    const doc = await SystemSettings.findOne({}).lean();
+    if (!doc) {
+      return successResponse(200, "SUCCESS", { settings: null }, res);
+    }
+
+    const {
+      website_name,
+      short_name,
+      tag_line,
+      logo_image,
+      fav_image,
+      copyright,
+    } = doc;
+
+    const safeSettings = {
+      website_name: website_name || "",
+      short_name: short_name || "",
+      tag_line: tag_line || "",
+      logo_image: logo_image || "",
+      fav_image: fav_image || "",
+      copyright: copyright || "",
+    };
+
+    return successResponse(200, "SUCCESS", { settings: safeSettings }, res);
+  } catch (err) {
+    return errorResponse(500, "ERROR", err.message || "Failed to fetch system settings", res);
+  }
+};
+
 export const upsertSystemSettings = async (req, res) => {
   try {
     const {

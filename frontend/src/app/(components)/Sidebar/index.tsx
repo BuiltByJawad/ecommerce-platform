@@ -26,6 +26,7 @@ import {
 import { useTheme } from 'next-themes';
 import React, { useState, useEffect } from 'react';
 import { SidebarLink } from './SidebarLink';
+import { useSystemSettings } from '@/utils/SystemSettingsProvider';
 
 const Sidebar = () => {
   const dispatch = useAppDispatch();
@@ -34,6 +35,11 @@ const Sidebar = () => {
   const permissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
   const { theme } = useTheme();
   const [showLogo, setShowLogo] = useState(!isSidebarCollapsed);
+  const { settings } = useSystemSettings();
+  const siteName = settings?.short_name || settings?.website_name || 'Ecommerce';
+  const currentYear = new Date().getFullYear();
+  const copyrightText =
+    settings?.copyright || `© ${currentYear} ${siteName}`;
 
   const toggleSidebar = () => {
     dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
@@ -78,7 +84,7 @@ const Sidebar = () => {
         {/* Logo Container with fixed height */}
         <div className='relative w-full flex items-center'>
           <h1 className={`font-extrabold text-lg ps-6 break-all ${showLogo ? 'block' : 'hidden'}`}>
-            Ecommerce
+            {siteName}
           </h1>
         </div>
 
@@ -140,7 +146,7 @@ const Sidebar = () => {
               isCollapsed={isSidebarCollapsed}
             />
             <SidebarLink
-              href='/users'
+              href='/admin/users'
               icon={Users}
               label='Users'
               isCollapsed={isSidebarCollapsed}
@@ -152,13 +158,13 @@ const Sidebar = () => {
               isCollapsed={isSidebarCollapsed}
             />
             <SidebarLink
-              href='/payments'
+              href='/admin/payments'
               icon={CreditCard}
               label='Payments'
               isCollapsed={isSidebarCollapsed}
             />
             <SidebarLink
-              href='/transactions'
+              href='/admin/transactions'
               icon={Receipt}
               label='Transactions'
               isCollapsed={isSidebarCollapsed}
@@ -288,7 +294,7 @@ const Sidebar = () => {
       >
         <div className='w-full flex items-center justify-center px-2'>
           <p className={`text-[11px] ${theme === 'dark' ? 'text-white/80' : 'text-black/70'}`}>
-            © 2024 Ecommerce
+            {copyrightText}
           </p>
         </div>
       </div>

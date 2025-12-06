@@ -72,7 +72,6 @@ const SettingsPage = () => {
       errors.confirmPassword = 'Passwords do not match';
     return errors;
   };
-  console.log(user);
 
   // Profile form submission
   const handleProfileSubmit = async (
@@ -94,7 +93,6 @@ const SettingsPage = () => {
           autoClose: 3000,
         });
         const newData = response?.data?.data?.user;
-        console.log(newData);
         dispatch(
           setCurrentUser({
             ...user,

@@ -5,36 +5,11 @@ import { useAppDispatch, useAppSelector } from '@/app/redux';
 import { addToCart, removeFromCart } from '@/app/state';
 import { Plus, Minus } from 'lucide-react';
 import Link from 'next/link';
+import type { Product as ProductType } from '@/types/types';
 
-// Define the Product interface to match the structure used in ProductDetails
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  discountedPrice?: number;
-  image: string;
-  description: string;
-  brand: string;
-  color: string;
-  material: string;
-  compatibleDevices?: string;
-  screenSize?: string;
-  dimensions?: string;
-  batteryLife?: string;
-  sensorType?: string;
-  batteryDescription?: string;
-  features: string[];
-  attributes?: { color: string[] };
-  category?: string;
-  cloudinaryPublicIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  imageUrls?: string[];
-  isInStock?: boolean;
-}
-
+// Minimal product shape required for cart operations
 interface AddToCartSectionProps {
-  product: Product;
+  product: ProductType;
 }
 
 const AddToCartSection: React.FC<AddToCartSectionProps> = ({ product }) => {
@@ -42,18 +17,26 @@ const AddToCartSection: React.FC<AddToCartSectionProps> = ({ product }) => {
   const cartItems = useAppSelector((state) => state.global.cartItems);
   const [animationTrigger, setAnimationTrigger] = useState<'add' | 'remove' | null>(null);
 
+  const productId = product._id as string | undefined;
+
   // Check if the product is in the cart and get its quantity
-  const cartItem = cartItems[product?._id];
+  const cartItem = productId ? cartItems[productId] : undefined;
+
+  const rawPrice = product.price;
+  const numericPrice =
+    typeof rawPrice === 'number' ? rawPrice : parseFloat(rawPrice || '0');
 
   const handleAddToCart = () => {
+    if (!productId) return;
     setAnimationTrigger('add');
     dispatch(addToCart(product)); // Pass the entire product object
     setTimeout(() => setAnimationTrigger(null), 500);
   };
 
   const handleRemoveFromCart = () => {
+    if (!productId) return;
     setAnimationTrigger('remove');
-    dispatch(removeFromCart(product?._id)); // Pass only the product ID for removal
+    dispatch(removeFromCart(productId)); // Pass only the product ID for removal
     setTimeout(() => setAnimationTrigger(null), 500);
   };
 
@@ -65,7 +48,7 @@ const AddToCartSection: React.FC<AddToCartSectionProps> = ({ product }) => {
     <div className='w-1/3'>
       <div className='bg-gray-100 dark:bg-gray-700 p-6 rounded-lg shadow-md sticky top-4'>
         <p className='text-xl font-semibold text-gray-800 dark:text-white mb-2'>
-          ${product?.price?.toFixed(2)}
+          ${numericPrice.toFixed(2)}
         </p>
         {/* <p className="text-gray-600 dark:text-gray-300 mb-2">
           $1.24 Shipping & Import Fees Deposit to Bangladesh
@@ -88,7 +71,7 @@ const AddToCartSection: React.FC<AddToCartSectionProps> = ({ product }) => {
               </button>
               <AnimatePresence mode='wait'>
                 <motion.span
-                  key={`${product._id}-${cartItem?.quantity}`}
+                  key={`${productId ?? 'unknown'}-${cartItem?.quantity ?? 0}`}
                   initial={
                     animationTrigger === 'add'
                       ? { y: -20, opacity: 0 }

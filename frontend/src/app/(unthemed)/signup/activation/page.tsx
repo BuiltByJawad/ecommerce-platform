@@ -12,6 +12,9 @@ const Activation = () => {
 
   // Resend verification code
   const handleResendCode = async () => {
+    if (!user?.email) {
+      return;
+    }
     try {
       const response = await post('/resend-code', {
         email: user.email,
@@ -28,8 +31,7 @@ const Activation = () => {
           theme: 'light',
         });
       }
-      console.log('Verification code resent', response);
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error?.response?.data?.error, {
         position: 'top-right',
         autoClose: 3000,

@@ -9,22 +9,69 @@ const Product = db.model.Product;
 
 export const findAll = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 50;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize) || 50, 1), 100);
+    const q = (req.query.q || '').toString().trim();
+    const role = (req.query.role || '').toString().trim();
 
-    const [data, count] = await Promise.all([
-      User.find({}).select("-password").skip((page - 1) * pageSize).limit(pageSize),
-      User.countDocuments({}),
-    ]);
+    const filter = {};
 
-    successResponse(200, "SUCCESS", { data, totalRows: count }, res);
+export const adminUpdateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body || {};
+    const allowed = ["customer", "company", "admin"];
+    if (!role || !allowed.includes(role)) {
+      return errorResponse(400, "FAILED", "Invalid role", res);
+    }
+
+    // Prevent self-demotion
+    if (String(req.user?._id) === String(id)) {
+      return errorResponse(400, "FAILED", "You cannot change your own role", res);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return errorResponse(404, "FAILED", "User not found", res);
+    }
+
+    return successResponse(200, "SUCCESS", { user }, res);
   } catch (err) {
-    errorResponse(
+    return errorResponse(
       500,
       "ERROR",
-      err.message || "Some error occurred while Finding User",
+      err.message || "Failed to update user role",
       res
     );
+  }
+};
+    if (role) (filter).role = role;
+    if (q) {
+      (filter).$or = [
+        { email: { $regex: q, $options: 'i' } },
+        { f_name: { $regex: q, $options: 'i' } },
+        { l_name: { $regex: q, $options: 'i' } },
+        { company_name: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    const [data, count] = await Promise.all([
+      User.find(filter)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize),
+      User.countDocuments(filter),
+    ]);
+
+    successResponse(200, 'SUCCESS', { data, totalRows: count, page, pageSize }, res);
+  } catch (err) {
+    errorResponse(500, 'ERROR', err.message || 'Some error occurred while Finding User', res);
   }
 };
 

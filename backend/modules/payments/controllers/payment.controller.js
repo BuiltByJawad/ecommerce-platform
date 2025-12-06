@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const Payment = db.model.Payment;
 const OrderDetails = db.model.OrderDetails;
+const User = db.model.User;
 
 const store_id = "testbox";
 const store_passwd = "qwerty";
@@ -288,5 +289,45 @@ export const paymentSuccess = async (req, res) => {
   } catch (error) {
     console.error("Payment success error:", error);
     errorResponse(500, "ERROR", "Error processing successful checkout", res);
+  }
+};
+
+// Admin: list payments with pagination and optional email filter
+export const listPayments = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+    const skip = (page - 1) * limit;
+    const email = (req.query.email || '').toString().trim();
+
+    const query = {};
+    if (email) {
+      const users = await User.find({ email: new RegExp(email, 'i') }).select('_id').lean();
+      const userIds = users.map((u) => u._id);
+      if (userIds.length === 0) {
+        return successResponse(200, 'SUCCESS', { data: [], pagination: { page, limit, total: 0 } }, res);
+      }
+      query.user = { $in: userIds };
+    }
+
+    const total = await Payment.countDocuments(query);
+    const data = await Payment.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('user', 'email role')
+      .lean();
+
+    return successResponse(
+      200,
+      'SUCCESS',
+      {
+        data,
+        pagination: { page, limit, total },
+      },
+      res
+    );
+  } catch (error) {
+    return errorResponse(500, 'ERROR', error?.message || 'Failed to list payments', res);
   }
 };

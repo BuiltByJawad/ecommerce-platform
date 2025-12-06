@@ -39,7 +39,6 @@ const Home = () => {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.global.cartItems);
   const { get } = useAxios();
-  console.log(cartItems);
   useEffect(() => {
     const fetchProducts = async () => {
       try {

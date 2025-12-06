@@ -11,6 +11,12 @@ import { useAppDispatch } from '../../redux';
 import { setCurrentUser } from '../../state';
 import { withAutoReset } from '@/utils/formikHelpers';
 
+interface LoginValues {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
 export default function Login() {
   const { post } = useAxios();
   const router = useRouter();
@@ -22,7 +28,7 @@ export default function Login() {
   });
 
   const handleLogin = useCallback(
-    async (values) => {
+    async (values: LoginValues) => {
       try {
         const response = await post('/login', values);
         if (response?.status === 200) {
@@ -39,7 +45,6 @@ export default function Login() {
             progress: undefined,
             theme: 'light',
           });
-          console.log(user.role);
           if (user?.role === 'admin') {
             router.push('/admin');
           } else if (user?.role === 'company') {
@@ -48,8 +53,7 @@ export default function Login() {
             router.push('/home');
           }
         }
-      } catch (error) {
-        console.log(error);
+      } catch (error: any) {
         toast.error(error?.response?.data?.data?.error, {
           position: 'top-right',
           autoClose: 1000,

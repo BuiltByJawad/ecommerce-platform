@@ -1,5 +1,20 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import type React from 'react';
+
+interface SearchBarDropdownOption {
+  value: string;
+  label: string;
+}
+
+interface SearchBarDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: SearchBarDropdownOption[];
+  onDropdownClose?: () => void;
+  showBackdrop: boolean;
+  onBackdropClick?: () => void;
+}
 
 export default function SearchBarDropdown({
   value,
@@ -8,14 +23,13 @@ export default function SearchBarDropdown({
   onDropdownClose,
   showBackdrop,
   onBackdropClick,
-}) {
+}: SearchBarDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const selectedOption = options.find((option) => option.value === value);
 
-  const handleSelect = (optionValue) => {
-    console.log(optionValue);
+  const handleSelect = (optionValue: string) => {
     onChange(optionValue);
     setIsOpen(false);
     // Call the callback to focus the search input after selection
@@ -29,8 +43,9 @@ export default function SearchBarDropdown({
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (dropdownRef.current && target && !dropdownRef.current.contains(target)) {
         setIsOpen(false);
         // Don't call onDropdownClose here since parent handles backdrop
       }
@@ -43,7 +58,7 @@ export default function SearchBarDropdown({
   }, []);
 
   // Prevent event bubbling when clicking inside dropdown
-  const handleDropdownClick = (e) => {
+  const handleDropdownClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
   };

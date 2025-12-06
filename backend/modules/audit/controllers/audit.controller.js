@@ -114,3 +114,36 @@ export const adminListAudits = async (req, res) => {
     return errorResponse(500, 'ERROR', err.message || 'Failed to fetch audit logs', res);
   }
 };
+
+export const logClientErrorEvent = async (req, res) => {
+  try {
+    const { message, name, stack, componentStack, url, userAgent: ua, extra } = req.body || {};
+    if (!message) {
+      return errorResponse(400, 'ERROR', 'Missing error message', res);
+    }
+    const trim = (value, max = 2000) =>
+      typeof value === 'string' ? value.slice(0, max) : undefined;
+    const metadata = {
+      source: 'frontend',
+      name: name || 'Error',
+      message: trim(message, 500),
+      stack: trim(stack),
+      componentStack: trim(componentStack, 1000),
+      url: trim(url, 1000),
+      userAgent: trim(ua, 500),
+      extra: extra && typeof extra === 'object' ? extra : undefined,
+    };
+    await logAudit({
+      req,
+      action: 'CLIENT_ERROR',
+      resourceType: 'frontend',
+      resourceId: null,
+      before: null,
+      after: null,
+      metadata,
+    });
+    return successResponse(201, 'SUCCESS', { logged: true }, res);
+  } catch (err) {
+    return errorResponse(500, 'ERROR', 'Failed to log client error', res);
+  }
+};

@@ -1,5 +1,6 @@
 "use client"
 import React, { Component, ReactNode } from 'react';
+import { logClientError } from '@/utils/errorLogger';
 
 /**
  * Error Boundary component for catching JavaScript errors anywhere in the component tree
@@ -51,6 +52,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }
 
     // TODO: Send error to error tracking service (Sentry, etc.)
+    logClientError(error, errorInfo);
   }
 
   /**
