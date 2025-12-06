@@ -12,19 +12,19 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
 
   return (
-    <div className='flex bg-gray-50 text-gray-900 w-full min-h-screen min-w-[1200px]'>
-      {/* Sidebar with width when collapsed and not collapsed */}
-      <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-[210px]'}`}>
+    <div className='flex bg-gray-50 text-gray-900 w-full min-h-screen'>
+      {/* Sidebar spacer matching fixed sidebar width */}
+      <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-[220px]'}`}>
         <Sidebar />
       </div>
 
-      {/* Main content taking remaining width */}
-      <main className={`${theme} flex-1 flex flex-col h-screen`}>
+      {/* Main content takes remaining space */}
+      <main className={`${theme} flex-1 flex flex-col min-h-screen min-w-0`}>
         <div className='w-full'>
           <Navbar />
         </div>
         <ToastContainer />
-        <div className='p-2'>{children}</div>
+        <div className='p-3 flex-1 min-h-0'>{children}</div>
       </main>
     </div>
   );

@@ -1,6 +1,7 @@
 import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
+import { logAudit } from "../../audit/controllers/audit.controller.js";
 
 const TaxSetting = db.model.TaxSetting;
 
@@ -25,6 +26,15 @@ export const upsertAdminRates = async (req, res) => {
       { ownerType: "admin", rates: cleaned },
       { upsert: true, new: true }
     );
+    await logAudit({
+      req,
+      action: "taxes.upsert",
+      resourceType: "TaxSetting",
+      resourceId: doc?._id,
+      before: null,
+      after: { ownerType: "admin", ratesCount: cleaned.length },
+      metadata: { ownerType: "admin" },
+    });
     return successResponse(200, "SUCCESS", { settings: doc }, res);
   } catch (err) {
     return errorResponse(500, "ERROR", err.message || "Failed to save tax rates", res);
@@ -56,6 +66,15 @@ export const upsertVendorRates = async (req, res) => {
       { ownerType: "vendor", owner: vendorId, rates: cleaned },
       { upsert: true, new: true }
     );
+    await logAudit({
+      req,
+      action: "taxes.upsert",
+      resourceType: "TaxSetting",
+      resourceId: doc?._id,
+      before: null,
+      after: { ownerType: "vendor", owner: vendorId, ratesCount: cleaned.length },
+      metadata: { ownerType: "vendor", owner: vendorId },
+    });
     return successResponse(200, "SUCCESS", { settings: doc }, res);
   } catch (err) {
     return errorResponse(500, "ERROR", err.message || "Failed to save vendor tax rates", res);

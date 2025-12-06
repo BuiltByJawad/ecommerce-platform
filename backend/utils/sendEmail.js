@@ -45,6 +45,21 @@ export const sendVerificationEmail = async (email) => {
   }
 };
 
+export const sendEmailSimple = async (to, subject, message) => {
+  try {
+    if (!to || !subject || !message) return;
+    const mailOptions = {
+      from: `${process.env.SMTP_FROM_EMAIL}`,
+      to,
+      subject,
+      text: message,
+      html: `<p>${message}</p>`,
+    };
+    await transporter.sendMail(mailOptions);
+  } catch (_err) {
+  }
+};
+
 export const sendPasswordResetEmail = async (email, resetLink) => {
   try {
     const mailOptions = {

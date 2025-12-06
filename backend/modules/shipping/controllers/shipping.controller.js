@@ -1,6 +1,7 @@
 import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
+import { logAudit } from "../../audit/controllers/audit.controller.js";
 
 const ShippingSetting = db.model.ShippingSetting;
 
@@ -13,6 +14,15 @@ export const upsertAdminRates = async (req, res) => {
       { ownerType: "admin", rates },
       { upsert: true, new: true }
     );
+    await logAudit({
+      req,
+      action: "shipping.upsert",
+      resourceType: "ShippingSetting",
+      resourceId: doc?._id,
+      before: null,
+      after: { ownerType: "admin", ratesCount: Array.isArray(rates) ? rates.length : 0 },
+      metadata: { ownerType: "admin" },
+    });
     return successResponse(200, "SUCCESS", { settings: doc }, res);
   } catch (err) {
     return errorResponse(500, "ERROR", err.message || "Failed to save shipping rates", res);
@@ -83,6 +93,15 @@ export const upsertVendorRates = async (req, res) => {
       { ownerType: "vendor", owner: vendorId, rates },
       { upsert: true, new: true }
     );
+    await logAudit({
+      req,
+      action: "shipping.upsert",
+      resourceType: "ShippingSetting",
+      resourceId: doc?._id,
+      before: null,
+      after: { ownerType: "vendor", owner: vendorId, ratesCount: Array.isArray(rates) ? rates.length : 0 },
+      metadata: { ownerType: "vendor", owner: vendorId },
+    });
     return successResponse(200, "SUCCESS", { settings: doc }, res);
   } catch (err) {
     return errorResponse(500, "ERROR", err.message || "Failed to save vendor shipping rates", res);

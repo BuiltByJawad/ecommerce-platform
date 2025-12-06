@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import express from "express";
+import { createServer } from "node:http";
 import { configureCors } from "./config/cors.config.js";
 import db from "./config/database.config.js";
 import configureRoutes from "./config/route.config.js";
@@ -11,6 +12,7 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 import net from "node:net";
+import { initIo } from "./lib/io.js";
 dotenv.config();
 
 const app = express();
@@ -80,13 +82,15 @@ const startServer = async () => {
   try {
     await db.connectToDatabase();
     const port = await findAvailablePort(REQUESTED_PORT);
-    const server = app.listen(port, () => {
+    const httpServer = createServer(app);
+    initIo(httpServer);
+    httpServer.listen(port, () => {
       console.log(`Server is running on port ${port}`);
       if (port !== REQUESTED_PORT) {
         console.log(`Requested port ${REQUESTED_PORT} is in use; started on ${port}`);
       }
     });
-    server.on("error", (err) => {
+    httpServer.on("error", (err) => {
       console.error("Server error:", err);
       process.exit(1);
     });
