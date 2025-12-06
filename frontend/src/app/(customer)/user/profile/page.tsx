@@ -19,11 +19,15 @@ const ProfileSection = () => {
   const user = useAppSelector((state) => state.global.currentUser);
   const [loading, setLoading] = useState(false);
 
+  const fullName = user
+    ? `${(user as any).f_name || ''} ${(user as any).l_name || ''}`.trim() || (user as any).name || ''
+    : '';
+
   const userInfo = {
-    name: user?.name || 'John Doe',
-    email: user?.email || 'john.doe@example.com',
-    phone: user?.phone || '(123) 456-7890',
-    address: user?.address || '123 Main St, Seattle, WA 98101',
+    name: fullName || 'Not provided',
+    email: user?.email || 'Not provided',
+    phone: user?.phone || 'Not provided',
+    address: user?.address || 'Not provided',
   };
 
   const handleLogout = async () => {
@@ -115,7 +119,7 @@ const ProfileSection = () => {
                 Your Orders
               </Link>
               <Link
-                href='/settings'
+                href='/user/settings'
                 className='flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
               >
                 <Settings className='w-5 h-5 mr-2' />

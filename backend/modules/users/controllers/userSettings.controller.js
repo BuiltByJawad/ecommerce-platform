@@ -6,7 +6,7 @@ import successResponse from "../../../utils/successResponse.js";
 export const updateProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { f_name, l_name, email } = req.body;
+    const { f_name, l_name, email, company_name, phone, address, tax_id, business_type } = req.body;
 
     // Validate required fields
     if (!f_name || !l_name || !email) {
@@ -39,12 +39,31 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    // Build update payload, always including core identity fields and
+    // optionally including vendor-specific fields when provided
+    const updatePayload = { f_name, l_name, email };
+
+    if (company_name !== undefined) {
+      updatePayload.company_name = company_name;
+    }
+    if (phone !== undefined) {
+      updatePayload.phone = phone;
+    }
+    if (address !== undefined) {
+      updatePayload.address = address;
+    }
+    if (tax_id !== undefined) {
+      updatePayload.tax_id = tax_id;
+    }
+    if (business_type !== undefined) {
+      updatePayload.business_type = business_type;
+    }
+
     // Update user profile
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { f_name, l_name, email },
-      { new: true, runValidators: true }
-    ).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(id, updatePayload, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
     console.log("this", updatedUser);
     successResponse(
       200,
@@ -58,6 +77,11 @@ export const updateProfile = async (req, res) => {
           email: updatedUser.email,
           role: updatedUser.role,
           isVerified: updatedUser.isVerified,
+          company_name: updatedUser.company_name,
+          tax_id: updatedUser.tax_id,
+          phone: updatedUser.phone,
+          address: updatedUser.address,
+          business_type: updatedUser.business_type,
         },
       },
       res

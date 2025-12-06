@@ -12,6 +12,8 @@ import TaxSetting from "../modules/taxes/models/taxSetting.model.js";
 import ReturnRequest from "../modules/returns/models/return.model.js";
 import Notification from "../modules/notifications/models/notification.model.js";
 import AuditLog from "../modules/audit/models/auditLog.model.js";
+import SystemSettings from "../modules/systemSettings/models/systemSettings.model.js";
+import Review from "../modules/reviews/models/review.model.js";
 
 const models = {
   User,
@@ -28,6 +30,8 @@ const models = {
   ReturnRequest,
   Notification,
   AuditLog,
+  SystemSettings,
+  Review,
 };
 
 export default models;
