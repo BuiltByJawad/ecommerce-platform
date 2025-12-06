@@ -7,6 +7,7 @@ import ProductImageUpload from '../../(dashboard)/business/products/ProductImage
 import { toast } from 'react-toastify';
 import useAxios from '../../../context/axiosContext';
 import Select from 'react-select';
+import type { StylesConfig } from 'react-select';
 import { AddProductFormProps, Category, Product } from '@/types/types';
 import { ProductSubmitIcon } from '../Icons/Icons';
 import { capitalize } from '@/utils/utils';
@@ -21,7 +22,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     const fetchCategories = async () => {
       try {
         const response = await get('/categories/all-categories');
-        console.log(response);
         if (response?.status === 200) {
           setCategories(response?.data?.data?.categories);
         }
@@ -33,16 +33,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     fetchCategories();
   }, []);
 
-  const productValidationSchema = (): Yup.ObjectSchema<Record<string, unknown>> => {
-    type SchemaType = {
-      [key: string]:
-        | Yup.StringSchema
-        | Yup.NumberSchema
-        | Yup.BooleanSchema
-        | Yup.ArraySchema<string>
-        | Yup.ObjectSchema<any>;
-    };
-    const schema: SchemaType = {
+  const productValidationSchema = (): Yup.ObjectSchema<any> => {
+    const schema: { [key: string]: any } = {
       category: Yup.string().required('Category is required'),
       name: Yup.string().required('Product name is required'),
       description: Yup.string().required('Description is required'),
@@ -101,7 +93,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
       );
     }
 
-    return Yup.object(schema);
+    return Yup.object(schema as any);
   };
 
   const initialValues: Product = {
@@ -223,7 +215,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
     }
   };
 
-  const customSelectStyles: SelectStyles = {
+  type AttributeOption = { value: string; label: string };
+
+  const customSelectStyles: StylesConfig<AttributeOption, true> = {
     control: (provided, state) => ({
       ...provided,
       borderColor: theme === 'dark' ? '#4b5563' : '#d1d5db',
@@ -426,7 +420,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
                               : [];
                             form.setFieldValue(field.name, values);
                           }}
-                          value={field.value?.map((val: string) => ({
+                          value={((field.value as string[]) || []).map((val: string) => ({
                             value: val,
                             label: capitalize(val),
                           }))}
@@ -520,14 +514,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ theme, router }) => {
               </label>
               <ProductImageUpload
                 onChange={(imageData) => setFieldValue('imageFiles', imageData)}
-                value={values.imageFiles}
+                value={values.imageFiles || []}
                 maxFiles={10}
                 maxFileSize={5}
               />
               <ErrorMessage name='imageFiles' component='p' className='text-red-500 text-xs mt-1' />
-              {values.imageFiles.length > 0 && (
+              {(values.imageFiles || []).length > 0 && (
                 <p className='text-sm text-gray-600 dark:text-gray-400 mt-2'>
-                  {values.imageFiles.length} image(s) selected
+                  {(values.imageFiles || []).length} image(s) selected
                 </p>
               )}
             </div>

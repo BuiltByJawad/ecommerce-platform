@@ -16,6 +16,7 @@ import Loading from '@/app/loading';
 import SearchBar from './SearchBar/SearchBar';
 import SubMenu from './SubMenu';
 import Notifications from './Notifications';
+import { useSystemSettings } from '@/utils/SystemSettingsProvider';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -27,6 +28,8 @@ const Navbar = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { post } = useAxios();
   const cartItems = useAppSelector((state) => state.global.cartItems);
+  const { settings } = useSystemSettings();
+  const siteName = settings?.short_name || settings?.website_name || 'Ecommerce';
 
   // Calculate cart items count by summing the quantity of each CartItem
   const cartItemsCount = cartItems
@@ -108,7 +111,7 @@ const Navbar = () => {
                     height={25}
                   />
                   <span className='self-center text-md font-semibold whitespace-nowrap text-2xl flex-shrink-0'>
-                    Ecommerce
+                    {siteName}
                   </span>
                 </Link>
               </div>
@@ -178,7 +181,7 @@ const Navbar = () => {
                             Settings
                           </Link>
                           <Link
-                            href='/customer/orders'
+                            href='/orders'
                             className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
                           >
                             Your Orders

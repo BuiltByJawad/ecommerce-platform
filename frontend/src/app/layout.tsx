@@ -3,6 +3,7 @@ import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 import LoadingProvider from '@/utils/LoadingProvider';
 import ErrorBoundary from './(components)/ErrorBoundary';
+import SystemSettingsProvider from '@/utils/SystemSettingsProvider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <div>
             <ReduxWrapper>
-              <LoadingProvider>{children}</LoadingProvider>
+              <LoadingProvider>
+                <SystemSettingsProvider>{children}</SystemSettingsProvider>
+              </LoadingProvider>
             </ReduxWrapper>
           </div>
         </ErrorBoundary>

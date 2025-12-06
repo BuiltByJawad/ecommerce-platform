@@ -9,7 +9,6 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleLoadingChange = (loading: boolean) => {
-    console.log('Register handleLoadingChange, loading:', loading);
     setIsLoading(loading);
   };
 

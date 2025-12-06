@@ -1,9 +1,10 @@
 import express from "express";
-import { getSystemSettings, upsertSystemSettings } from "../controllers/systemSettings.controller.js";
+import { getSystemSettings, upsertSystemSettings, getPublicSystemSettings } from "../controllers/systemSettings.controller.js";
 import { protectedRoute, adminRoute } from "../../../middlewares/authJwt.js";
 
 const systemSettingsRouter = express.Router();
 
+systemSettingsRouter.get("/public", getPublicSystemSettings);
 systemSettingsRouter.get("/admin", protectedRoute, adminRoute, getSystemSettings);
 systemSettingsRouter.put("/admin", protectedRoute, adminRoute, upsertSystemSettings);
 

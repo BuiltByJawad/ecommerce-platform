@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import RatingPopup from '@/app/(components)/Rating';
 import { ProductDetailsSectionProps } from '@/types/types';
+import { useSystemSettings } from '@/utils/SystemSettingsProvider';
 
 // SVG components for stars
 const FullStar = () => (
@@ -43,6 +44,8 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
 }) => {
   const [isRatingPopupOpen, setIsRatingPopupOpen] = useState(false);
   const [showMoreSpecs, setShowMoreSpecs] = useState(false);
+  const { settings } = useSystemSettings();
+  const siteName = settings?.short_name || settings?.website_name || 'Ecommerce';
 
   const _toggleShowMoreSpecs = () => {
     setShowMoreSpecs(!showMoreSpecs);
@@ -113,7 +116,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
         )}
       </div>
       <p className='text-green-600 dark:text-green-400 mb-4'>In Stock</p>
-      <p className='text-gray-600 dark:text-gray-300 mb-2'>Ships from: Ecommerce</p>
+      <p className='text-gray-600 dark:text-gray-300 mb-2'>Ships from: {siteName}</p>
       <p className='text-gray-600 dark:text-gray-300 mb-4'>Sold by: {product?.brand} AUTHORIZED</p>
       <p className='text-gray-600 dark:text-gray-300 mb-4'>30-day return/refund/replacement</p>
       <div className='mb-4'>

@@ -58,7 +58,7 @@ const OrdersPage = () => {
         <div className='flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4 mb-6'>
           <h1 className='text-2xl font-semibold text-gray-900 dark:text-gray-100'>My Orders</h1>
           <Link
-            href='/customer/user/profile'
+            href='/user/profile'
             className='text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
           >
             Back to Account
@@ -118,7 +118,7 @@ const OrdersPage = () => {
                 </div>
                 <div className='mt-3 flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-3'>
                   <p className='text-sm font-semibold'>Total: ${order.orderSummary.total.toFixed(2)}</p>
-                  <Link href={`/customer/orders/${order._id}`} className='text-xs text-blue-600 hover:underline'>
+                  <Link href={`/orders/${order._id}`} className='text-xs text-blue-600 hover:underline'>
                     View details
                   </Link>
                 </div>

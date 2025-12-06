@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import type React from 'react';
 import { useAppSelector } from '@/app/redux';
 import { useRouter } from 'next/navigation';
 import SearchBarDropdown from './SearchBarDropdown';
@@ -13,8 +14,8 @@ export default function SearchBar() {
   const [showBackdrop, setShowBackdrop] = useState(false);
 
   // Add ref for the search input
-  const searchInputRef = useRef(null);
-  const searchBarRef = useRef(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchBarRef = useRef<HTMLFormElement | null>(null);
 
   const categoryOptions = [
     {
@@ -36,7 +37,7 @@ export default function SearchBar() {
     },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate search query
@@ -88,8 +89,9 @@ export default function SearchBar() {
 
   // Handle clicks outside the search bar area
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchBarRef.current && !searchBarRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (searchBarRef.current && target && !searchBarRef.current.contains(target)) {
         setShowBackdrop(false);
       }
     };
@@ -99,8 +101,6 @@ export default function SearchBar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  console.log(category);
   return (
     <div className='w-full max-w-2xl px-5'>
       {user?.role === 'customer' ? (

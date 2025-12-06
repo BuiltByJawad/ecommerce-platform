@@ -10,6 +10,7 @@ import ProductImageZoom from '@/app/(components)/ProductImageZoom';
 import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
 import type { Product } from '@/types/types';
+import { useSystemSettings } from '@/utils/SystemSettingsProvider';
 
 // Mock data for reviews (unchanged)
 const reviews = [
@@ -49,6 +50,8 @@ const ProductDetails = () => {
   const [totalRatings, setTotalRatings] = useState(0);
   const [ratingDistribution, setRatingDistribution] = useState<number[]>([0, 0, 0, 0, 0]);
   const [productReviews, setProductReviews] = useState<any[]>([]);
+  const { settings } = useSystemSettings();
+  const siteName = settings?.short_name || settings?.website_name || 'our marketplace';
 
   // Get user from Redux store
   const user = useAppSelector((state) => state.global.currentUser);
@@ -172,7 +175,7 @@ const ProductDetails = () => {
         {/* Seller Promotion Section */}
         <div className='mt-12'>
           <p className='text-gray-600 dark:text-gray-300'>
-            New to Amazon: Introducing Michael Kors{' '}
+            New on {siteName}: Discover more great products{' '}
             <Link href='/home' className='text-blue-500 hover:underline'>
               Shop now
             </Link>
