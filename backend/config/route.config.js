@@ -13,6 +13,8 @@ import auditRoute from "../modules/audit/routes/audit.route.js";
 import paymentRoute from "../modules/payments/routes/payment.route.js";
 import productRoute from "../modules/products/routes/product.route.js";
 import userRoutes from "../modules/users/routes/user.route.js";
+import systemSettingsRoute from "../modules/systemSettings/routes/systemSettings.route.js";
+import reviewRoute from "../modules/reviews/routes/review.route.js";
 
 const configureRoutes = (app) => {
   userRoutes(app);
@@ -30,6 +32,8 @@ const configureRoutes = (app) => {
   returnRoute(app);
   notificationRoute(app);
   auditRoute(app);
+  systemSettingsRoute(app);
+  reviewRoute(app);
 };
 
 export default configureRoutes;

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAppSelector } from '@/app/redux';
@@ -9,6 +9,7 @@ import ProductDetailsSection from '@/app/(components)/ProductDetails';
 import ProductImageZoom from '@/app/(components)/ProductImageZoom';
 import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
+import type { Product } from '@/types/types';
 
 // Mock data for reviews (unchanged)
 const reviews = [
@@ -37,17 +38,20 @@ const reviews = [
 
 const ProductDetails = () => {
   const params = useParams();
-  const { id, productName } = params;
+  const rawId = params?.id;
+  const rawProductName = params?.productName;
+  const productId: string = (Array.isArray(rawId) ? rawId[0] : rawId) || '';
+  const productName: string = (Array.isArray(rawProductName) ? rawProductName[0] : rawProductName) || '';
   const { get, loading } = useAxios();
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [rating, setRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [ratingDistribution, setRatingDistribution] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [productReviews, setProductReviews] = useState<any[]>([]);
 
   // Get user from Redux store
   const user = useAppSelector((state) => state.global.currentUser);
-
-  const rating = 4.3;
-  const totalRatings = 10087;
-  const ratingDistribution = [6657, 1513, 908, 303, 706]; // 5★, 4★, 3★, 2★, 1★
 
   // Fetch products using useAxios
   useEffect(() => {
@@ -67,10 +71,40 @@ const ProductDetails = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [get]);
+
+  const loadReviews = useCallback(async () => {
+    if (!productId) return;
+    try {
+      const res = await get(`/reviews/product/${productId}`, {});
+      const data = res?.data?.data;
+      const list = (data?.reviews || []).map((r: any) => ({
+        id: r._id,
+        reviewer: r.reviewerName || r.user?.email || 'Customer',
+        rating: r.rating,
+        comment: r.comment,
+        date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '',
+      }));
+      setProductReviews(list);
+      const summary = data?.summary || {};
+      setRating(summary.averageRating || 0);
+      setTotalRatings(summary.totalRatings || 0);
+      setRatingDistribution(
+        Array.isArray(summary.distribution) && summary.distribution.length === 5
+          ? summary.distribution
+          : [0, 0, 0, 0, 0]
+      );
+    } catch (e) {
+      // Ignore review loading errors on product page for now
+    }
+  }, [get, productId]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
 
   // Find the product by _id - handle non-numeric ID safely
-  const product = id ? products?.find((p) => p._id === id) : null;
+  const product = productId ? products?.find((p) => p._id === productId) : null;
 
   // Handle loading state
   if (loading) {
@@ -150,10 +184,11 @@ const ProductDetails = () => {
           rating={rating}
           totalRatings={totalRatings}
           ratingDistribution={ratingDistribution}
-          reviews={reviews}
+          reviews={productReviews}
           user={user}
           productName={productName}
-          id={id}
+          id={productId}
+          onReviewSubmitted={loadReviews}
         />
 
         {/* Related Products Section */}

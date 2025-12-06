@@ -21,6 +21,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import Image from 'next/image';
+import useAxios from '@/context/axiosContext';
 
 // Interface for the System Settings data
 interface SystemSettingsData {
@@ -69,27 +70,28 @@ const SystemSettingsPage: React.FC = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [favFile, setFavFile] = useState<File | null>(null);
 
+  const { get, put } = useAxios();
+
   useEffect(() => {
-    setTimeout(() => {
-      const serverFetchedSettings: SystemSettingsData = {
-        id: 1,
-        website_name: 'My Awesome Site',
-        tag_line: 'The best place on the web!',
-        short_name: 'MAS',
-        address: '123 Main St, Anytown, USA',
-        mobile: '+1234567890',
-        logo_image: '', // Replace with actual URL or leave empty for placeholder
-        fav_image: '', // Replace with actual URL or leave empty for placeholder
-        days_of_week: 'Monday,Tuesday,Wednesday,Thursday,Friday',
-        point: 10.5,
-        vat_type: 1,
-        copyright: `© ${new Date().getFullYear()} My Awesome Site. All rights reserved.`,
-        status: 1,
-      };
-      fetchedInitialSettings = { ...serverFetchedSettings };
-      setSettings(serverFetchedSettings);
-    }, 1000);
-  }, []);
+    const fetchSettings = async () => {
+      try {
+        setError(null);
+        const res = await get('/system-settings/admin', {});
+        const data = res?.data?.data?.settings || null;
+        const nextSettings: SystemSettingsData = {
+          ...initialSettings,
+          ...(data || {}),
+        };
+        fetchedInitialSettings = { ...nextSettings };
+        setSettings(nextSettings);
+      } catch (e: any) {
+        const message = e?.response?.data?.message || 'Failed to load system settings';
+        setError(message);
+      }
+    };
+
+    fetchSettings();
+  }, [get]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -150,61 +152,32 @@ const SystemSettingsPage: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
 
-    // Create a FormData object to simulate file uploads along with other data
-    const formData = new FormData();
+    try {
+      const payload: any = { ...settings };
+      delete payload.id;
 
-    // Append all settings to formData.
-    // For file inputs, we'll append the File object if a new file was selected.
-    // Otherwise, we might send the existing URL (settings.logo_image or settings.fav_image)
-    // or handle it based on backend requirements.
-    Object.entries(settings).forEach(([key, value]) => {
-      if (key === 'logo_image' && logoFile) {
-        // If a new logo file is selected, append it
-        formData.append('logo_image_file', logoFile);
-      } else if (key === 'fav_image' && favFile) {
-        // If a new fav file is selected, append it
-        formData.append('fav_image_file', favFile);
-      } else if (key !== 'logo_image' && key !== 'fav_image') {
-        // Append other string/number settings
-        formData.append(key, String(value));
-      } else {
-        // If no new file was selected for logo/favicon, append the existing URL string
-        formData.append(key, String(value));
+      const res = await put('/system-settings/admin', payload);
+      const updated = res?.data?.data?.settings || null;
+
+      if (updated) {
+        const nextSettings: SystemSettingsData = {
+          ...initialSettings,
+          ...(updated || {}),
+        };
+        fetchedInitialSettings = { ...nextSettings };
+        setSettings(nextSettings);
       }
-    });
 
-    // If you only want to send the file if it's new, and not the dataURL:
-    // This is a more typical approach for actual file uploads.
-    // The handleChange function already updates settings.logo_image to a dataURL for preview.
-    // The backend would typically handle either a file upload or a URL string.
-
-    console.log('Submitting FormData (simulated):');
-    for (const [key, value] of formData.entries()) {
-      // For File objects, value will be the File object itself.
-      // For other fields, it will be the string representation.
-      console.log(key, value instanceof File ? value.name : value);
-    }
-
-    // Simulate API call
-    setTimeout(() => {
-      // Assuming the save is successful
-      setSuccessMessage('Settings saved successfully! (Simulated)');
-      setIsSaving(false);
-      // After successful save, the `logoFile` and `favFile` states should be reset
-      // as they represent new files to be uploaded. The `settings.logo_image` and
-      // `settings.fav_image` would now hold the (potentially new) URLs from the server response.
-      // For this simulation, we'll assume the server responds with the same data or new URLs
-      // and we would re-fetch or update `fetchedInitialSettings` and `settings`.
-      setLogoFile(null); // Reset file input state
-      setFavFile(null); // Reset file input state
-
-      // To reflect the "saved" state, update fetchedInitialSettings
-      // This is important if the user clears a file input *after* saving
-      // It should revert to the "saved" state, not the original pre-load state.
-      fetchedInitialSettings = { ...settings };
-
+      setSuccessMessage('Settings saved successfully!');
+      setLogoFile(null);
+      setFavFile(null);
       setTimeout(() => setSuccessMessage(null), 3000);
-    }, 1500);
+    } catch (e: any) {
+      const message = e?.response?.data?.message || 'Failed to save system settings';
+      setError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLabelClick = (event: MouseEvent<HTMLLabelElement>) => {

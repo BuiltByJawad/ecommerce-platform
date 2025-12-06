@@ -163,18 +163,92 @@ const Navbar = () => {
 
                   {isDropdownOpen && (
                     <div className='absolute right-0 mt-2 w-48 py-2 bg-white border rounded shadow-lg dark:bg-gray-800 dark:border-gray-700'>
-                      <Link
-                        href='/user/profile'
-                        className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
-                      >
-                        Profile
-                      </Link>
-                      <Link
-                        href='/user/settings'
-                        className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
-                      >
-                        Settings
-                      </Link>
+                      {user?.role === 'customer' && (
+                        <>
+                          <Link
+                            href='/user/profile'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Profile
+                          </Link>
+                          <Link
+                            href='/user/settings'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Settings
+                          </Link>
+                          <Link
+                            href='/customer/orders'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Your Orders
+                          </Link>
+                        </>
+                      )}
+
+                      {user?.role === 'company' && (
+                        <>
+                          <Link
+                            href='/business'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Business Dashboard
+                          </Link>
+                          <Link
+                            href='/business/settings'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Business Settings
+                          </Link>
+                          <Link
+                            href='/user/settings'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Account Settings
+                          </Link>
+                        </>
+                      )}
+
+                      {user?.role === 'admin' && (
+                        <>
+                          <Link
+                            href='/admin'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            href='/admin/settings'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            System Settings
+                          </Link>
+                          <Link
+                            href='/admin/audits'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Audits
+                          </Link>
+                        </>
+                      )}
+
+                      {!user?.role && (
+                        <>
+                          <Link
+                            href='/user/profile'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Profile
+                          </Link>
+                          <Link
+                            href='/user/settings'
+                            className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                          >
+                            Settings
+                          </Link>
+                        </>
+                      )}
+
                       <button
                         onClick={handleLogout}
                         className='text-start w-full block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'

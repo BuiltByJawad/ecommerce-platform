@@ -121,8 +121,7 @@ export interface ProductDetailsSectionProps {
   product: Product;
   totalRatings: number;
   ratingDistribution: number[];
-  isTryOnOpen: boolean;
-  setIsTryOnOpen: (isOpen: boolean) => void;
+  rating?: number;
 }
 
 export interface CartItem {

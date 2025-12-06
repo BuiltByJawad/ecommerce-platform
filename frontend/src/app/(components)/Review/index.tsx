@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import useAxios from '@/context/axiosContext';
+import { toast } from 'react-toastify';
 
 interface Review {
-  id: number;
+  id: string;
   reviewer: string;
   rating: number;
   comment: string;
@@ -17,6 +19,7 @@ interface ReviewsSectionProps {
   user: any; // Replace 'any' with the actual user type from your Redux store
   productName: string | string[];
   id: string | string[];
+  onReviewSubmitted?: () => void;
 }
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({
@@ -27,11 +30,13 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   user,
   productName,
   id,
+  onReviewSubmitted,
 }) => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const { post } = useAxios();
 
   // Handle review form submission
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -40,16 +45,27 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
       alert('Please provide a rating and a comment.');
       return;
     }
+    const productId = Array.isArray(id) ? id[0] : id;
+    if (!productId) {
+      toast.error('Missing product identifier for review');
+      return;
+    }
     try {
       setSubmittingReview(true);
-      // TODO: integrate with backend API to submit review
-      console.log('Review submitted:', {
+      await post(`/reviews/product/${productId}`, {
         rating: reviewRating,
         comment: reviewComment,
       });
+      toast.success('Review submitted successfully');
       setReviewRating(0);
       setReviewComment('');
       setIsReviewModalOpen(false);
+      if (onReviewSubmitted) {
+        onReviewSubmitted();
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.data?.error || 'Failed to submit review';
+      toast.error(message);
     } finally {
       setSubmittingReview(false);
     }
@@ -75,7 +91,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
             <div className='space-y-2'>
               {ratingDistribution.map((count, index) => {
                 const star = 5 - index;
-                const percentage = (count / totalRatings) * 100;
+                const percentage = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
                 return (
                   <div key={star} className='flex items-center gap-2'>
                     <span className='text-sm text-gray-600 dark:text-gray-300'>{star} star</span>

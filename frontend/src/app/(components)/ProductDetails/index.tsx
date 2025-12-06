@@ -39,6 +39,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
   product,
   totalRatings,
   ratingDistribution,
+  rating,
 }) => {
   const [isRatingPopupOpen, setIsRatingPopupOpen] = useState(false);
   const [showMoreSpecs, setShowMoreSpecs] = useState(false);
@@ -91,7 +92,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
       <RatingPopup
         isOpen={isRatingPopupOpen}
         onClose={() => setIsRatingPopupOpen(false)}
-        rating={product.rating}
+        rating={rating ?? product.rating}
         totalRatings={totalRatings}
         ratingDistribution={ratingDistribution}
       />
