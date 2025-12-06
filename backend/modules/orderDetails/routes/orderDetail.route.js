@@ -1,5 +1,6 @@
 import express from "express";
 import * as orderDetailsController from "../controllers/orderDetail.controller.js";
+import rateLimit from "express-rate-limit";
 
 import {
   adminRoute,
@@ -12,6 +13,14 @@ const orderDetailsRouter = express.Router();
 
 orderDetailsRouter.post("/create", orderDetailsController.createOrderDetails);
 orderDetailsRouter.get("/findall", orderDetailsController.findAllOrderDetails);
+const exportLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
+orderDetailsRouter.get(
+  "/admin/export",
+  exportLimiter,
+  protectedRoute,
+  adminRoute,
+  orderDetailsController.exportOrdersCsv
+);
 orderDetailsRouter.get("/:id", orderDetailsController.findOneOrderDetails);
 orderDetailsRouter.get("/my", protectedRoute, orderDetailsController.getMyOrders);
 orderDetailsRouter.get(

@@ -18,4 +18,7 @@ if (!Number.isNaN(ttlDays) && ttlDays > 0) {
   NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: ttlDays * 24 * 60 * 60 });
 }
 
+// Performance compound index for listing unread by user
+NotificationSchema.index({ user: 1, read: 1, createdAt: -1 });
+
 export default mongoose.model("Notification", NotificationSchema);

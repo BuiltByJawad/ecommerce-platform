@@ -14,6 +14,7 @@ import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useAxios from '@/context/axiosContext';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
 
 interface OrderSummary {
   total: number;
@@ -26,6 +27,7 @@ interface Order {
   address: string;
   city: string;
   country: string;
+  email?: string;
   orderSummary: OrderSummary;
   status: 'Pending' | 'Complete' | 'Shipped' | 'Delivered' | 'Cancelled';
   createdAt: string;
@@ -38,21 +40,8 @@ const AdminOrders: React.FC = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const { get, post, loading } = useAxios();
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await get('/order-details/findall');
-        if (response?.status === 201) {
-          setOrders(response?.data?.data?.orderDetails || []);
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        toast.error('Failed to load orders');
-      }
-    };
-    fetchOrders();
-  }, []);
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+  
 
   const formatPrice = useCallback(
     (price: number) =>
@@ -64,6 +53,43 @@ const AdminOrders: React.FC = () => {
         : 'N/A',
     []
   );
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<'all' | Order['status']>('all');
+  const [emailFilter, setEmailFilter] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(20);
+  const [total, setTotal] = useState<number>(0);
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+
+  const filteredOrders = useMemo(() => {
+    // When using server-side filters, simply return current orders
+    return orders;
+  }, [orders]);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const params: any = { page, limit };
+      if (statusFilter !== 'all') params.status = statusFilter;
+      if (emailFilter) params.email = emailFilter;
+      if (fromDate) params.from = fromDate;
+      if (toDate) params.to = toDate;
+      const response = await get('/order-details/findall', { params });
+      if (response?.status === 200) {
+        const payload = response?.data?.data || {};
+        setOrders(Array.isArray(payload.data) ? payload.data : []);
+        setTotal(Number(payload?.pagination?.total) || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to load orders');
+    }
+  }, [get, page, limit, statusFilter, emailFilter, fromDate, toDate]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const formatDate = useCallback(
     (dateString: string) =>
@@ -203,6 +229,12 @@ const AdminOrders: React.FC = () => {
         header: () => <div className='text-right pr-1 sm:pr-2'>Actions</div>,
         cell: ({ row }) => (
           <div className='flex flex-wrap gap-1'>
+            <Link
+              href={`/admin/orders/${row.original._id}`}
+              className='px-2 py-1 text-xs rounded border bg-white text-gray-700 hover:bg-gray-100'
+            >
+              View
+            </Link>
             {['Pending', 'Complete', 'Shipped', 'Delivered', 'Cancelled'].map((st) => (
               <button
                 key={st}
@@ -226,7 +258,7 @@ const AdminOrders: React.FC = () => {
   }, [formatDate, formatPrice, getStatusColor, updateOrderStatus]);
 
   const table = useReactTable({
-    data: orders,
+    data: filteredOrders,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -236,9 +268,84 @@ const AdminOrders: React.FC = () => {
   });
 
 return (
-  <div
-    className={`${theme} overflow-x-auto shadow-lg rounded-lg border border-gray-200 w-full min-w-[320px] max-w-full`}
-  >
+  <div className={`${theme} w-full max-w-full` }>
+    <div className='mb-3 flex items-center gap-2'>
+      <select
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value as any)}
+        className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+      >
+        <option value='all'>All statuses</option>
+        <option value='Pending'>Pending</option>
+        <option value='Complete'>Complete</option>
+        <option value='Shipped'>Shipped</option>
+        <option value='Delivered'>Delivered</option>
+        <option value='Cancelled'>Cancelled</option>
+      </select>
+      <input
+        value={emailFilter}
+        onChange={(e) => setEmailFilter(e.target.value)}
+        placeholder='Filter by customer email'
+        className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800 min-w-[220px]'
+      />
+      <input
+        type='date'
+        value={fromDate}
+        onChange={(e) => setFromDate(e.target.value)}
+        className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+      />
+      <input
+        type='date'
+        value={toDate}
+        onChange={(e) => setToDate(e.target.value)}
+        className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+      />
+      <button onClick={() => { setPage(1); fetchOrders(); }} className='px-2 py-1 border rounded dark:border-gray-700'>Apply</button>
+      <a
+        href={`${apiBase}/order-details/admin/export?${new URLSearchParams({
+          status: statusFilter === 'all' ? '' : statusFilter,
+          email: emailFilter || '',
+          from: fromDate || '',
+          to: toDate || '',
+          limit: String(Math.max(limit, 1000)),
+        }).toString()}`}
+        target='_blank'
+        rel='noopener noreferrer'
+        className='px-2 py-1 border rounded dark:border-gray-700 bg-gray-50 hover:bg-gray-100'
+      >
+        Export CSV
+      </a>
+      <div className='ml-auto flex items-center gap-2'>
+        <div className='text-xs text-gray-600'>
+          {total > 0 ? `Showing ${(page - 1) * limit + 1}-${Math.min(page * limit, total)} of ${total}` : 'No results'}
+        </div>
+        <button
+          disabled={page <= 1}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+        >
+          Prev
+        </button>
+        <button
+          disabled={page * limit >= total}
+          onClick={() => setPage((p) => p + 1)}
+          className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+        >
+          Next
+        </button>
+        <select
+          value={limit}
+          onChange={(e) => { setPage(1); setLimit(parseInt(e.target.value)); }}
+          className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
+      </div>
+    </div>
+
+    <div className='overflow-x-auto shadow-lg rounded-lg border border-gray-200 w-full min-w-[320px]'>
     {loading && (
       <div className='flex justify-center py-4'>
         <svg
@@ -322,6 +429,7 @@ return (
         ))}
       </tbody>
     </table>
+    </div>
   </div>
 );
 
