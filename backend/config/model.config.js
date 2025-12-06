@@ -9,6 +9,9 @@ import Country from "../modules/countries/models/country.model.js";
 import OrderDetails from "../modules/orderDetails/models/orderDetail.model.js";
 import ShippingSetting from "../modules/shipping/models/shippingSetting.model.js";
 import TaxSetting from "../modules/taxes/models/taxSetting.model.js";
+import ReturnRequest from "../modules/returns/models/return.model.js";
+import Notification from "../modules/notifications/models/notification.model.js";
+import AuditLog from "../modules/audit/models/auditLog.model.js";
 
 const models = {
   User,
@@ -22,6 +25,9 @@ const models = {
   OrderDetails,
   ShippingSetting,
   TaxSetting,
+  ReturnRequest,
+  Notification,
+  AuditLog,
 };
 
 export default models;

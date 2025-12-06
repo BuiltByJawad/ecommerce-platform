@@ -1,9 +1,12 @@
 import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
+import { createNotification } from "../../notifications/controllers/notification.controller.js";
+import { sendEmailSimple } from "../../../utils/sendEmail.js";
 
 const OrderDetails = db.model.OrderDetails;
 const Product = db.model.Product;
+const User = db.model.User;
 
 export const createOrderDetails = async (req, res) => {
   //   console.log("this", req.body);
@@ -317,6 +320,52 @@ export const updateOrderDetails = async (req, res) => {
     if (!updatedOrder) {
       return errorResponse(404, "NOT_FOUND", "Order not found", res);
     }
+
+    // Notifications (best-effort): inform customer and vendors of status change
+    try {
+      const customer = await User.findOne({ email: updatedOrder.email }).select("_id email").lean();
+      if (customer) {
+        await createNotification({
+          user: customer._id,
+          title: "Order status updated",
+          message: `Your order ${updatedOrder._id} status is now ${status}`,
+          type: "order",
+          metadata: { orderId: updatedOrder._id, status },
+        });
+        if (customer.email) {
+          await sendEmailSimple(
+            customer.email,
+            "Order status updated",
+            `Your order (${updatedOrder._id}) status is now: ${status}.`
+          );
+        }
+      }
+      const ids = Array.from(new Set((updatedOrder.orderItems || []).map((it) => String(it.productId))))
+        .filter(Boolean);
+      if (ids.length) {
+        const prods = await Product.find({ _id: { $in: ids } }).select("seller").lean();
+        const vendorIds = Array.from(new Set(prods.map((p) => String(p.seller || "")).filter(Boolean)));
+        if (vendorIds.length) {
+          const vendors = await User.find({ _id: { $in: vendorIds } }).select("_id email").lean();
+          for (const v of vendors) {
+            await createNotification({
+              user: v._id,
+              title: "Order status changed",
+              message: `Order ${updatedOrder._id} status is now ${status}`,
+              type: "order",
+              metadata: { orderId: updatedOrder._id, status },
+            });
+            if (v.email) {
+              await sendEmailSimple(
+                v.email,
+                "Order status changed",
+                `Order ${updatedOrder._id} status is now: ${status}.`
+              );
+            }
+          }
+        }
+      }
+    } catch (_e) {}
 
     // Return success response with the updated order
     return successResponse(

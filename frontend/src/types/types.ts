@@ -142,6 +142,7 @@ export interface InitialStateTypes {
     [key: string]: CartItem;
   };
   loading: boolean;
+  notificationsMuted: boolean;
 }
 
 export interface Attribute {

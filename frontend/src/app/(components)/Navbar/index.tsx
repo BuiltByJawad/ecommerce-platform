@@ -2,7 +2,7 @@
 
 import { useAppDispatch, useAppSelector } from '../../redux';
 import { setCurrentUser } from '../../state';
-import { Bell, ShoppingCart, User } from 'lucide-react';
+import { ShoppingCart, User } from 'lucide-react';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Loading from '@/app/loading';
 import SearchBar from './SearchBar/SearchBar';
 import SubMenu from './SubMenu';
+import Notifications from './Notifications';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -22,7 +23,7 @@ const Navbar = () => {
   const user = useAppSelector((state) => state.global.currentUser);
   const { theme } = useTheme();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const { post } = useAxios();
   const cartItems = useAppSelector((state) => state.global.cartItems);
@@ -136,7 +137,7 @@ const Navbar = () => {
                       <ShoppingCart className='cursor-pointer w-6 h-6' size={24} />
                     </Link>
                   ) : (
-                    <Bell className='cursor-pointer w-6 h-6' size={24} />
+                    <Notifications />
                   )}
 
                   {user?.role === 'customer' || !user ? (
