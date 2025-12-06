@@ -92,6 +92,76 @@ export const createOrderDetails = async (req, res) => {
   }
 };
 
+const toCsv = (rows) => {
+  const headers = [
+    'id',
+    'createdAt',
+    'firstName',
+    'lastName',
+    'email',
+    'address',
+    'city',
+    'country',
+    'itemsSubtotal',
+    'shipping',
+    'discount',
+    'tax',
+    'total',
+    'status',
+    'paymentMethod',
+    'transactionId',
+  ];
+  const escape = (v) => {
+    if (v == null) return '';
+    const s = String(v).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+  const lines = [headers.join(',')];
+  for (const r of rows) {
+    lines.push([
+      r._id,
+      r.createdAt ? new Date(r.createdAt).toISOString() : '',
+      r.firstName || '',
+      r.lastName || '',
+      r.email || '',
+      r.address || '',
+      r.city || '',
+      r.country || '',
+      r.orderSummary?.itemsSubtotal ?? '',
+      r.orderSummary?.shipping ?? '',
+      r.orderSummary?.discount ?? '',
+      r.orderSummary?.tax ?? '',
+      r.orderSummary?.total ?? '',
+      r.status || '',
+      r.paymentMethod || '',
+      r.transactionId || '',
+    ].map(escape).join(','));
+  }
+  return lines.join('\n');
+};
+
+export const exportOrdersCsv = async (req, res) => {
+  try {
+    const { status, email, from, to } = req.query || {};
+    const limit = Math.min(parseInt(req.query.limit) || 5000, 20000);
+    const filter = {};
+    if (status) filter.status = status;
+    if (email) filter.email = { $regex: String(email), $options: 'i' };
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+    const rows = await OrderDetails.find(filter).sort({ createdAt: -1 }).limit(limit).lean();
+    const csv = toCsv(rows || []);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="orders.csv"');
+    return res.status(200).send(csv);
+  } catch (err) {
+    return errorResponse(500, 'ERROR', err.message || 'Failed to export orders', res);
+  }
+};
+
 export const getVendorOrders = async (req, res) => {
   try {
     const user = req.user;
@@ -241,24 +311,31 @@ export const getMyOrders = async (req, res) => {
 
 export const findAllOrderDetails = async (req, res) => {
   try {
-    const orderDetails = await OrderDetails.find({});
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const { status, email, from, to } = req.query || {};
+    const filter = {};
+    if (status) filter.status = status;
+    if (email) filter.email = { $regex: String(email), $options: "i" };
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
 
-    successResponse(
-      201,
-      "SUCCESS",
-      {
-        orderDetails,
-        message: "Order Details found successfully",
-      },
-      res
-    );
+    const [rows, total] = await Promise.all([
+      OrderDetails.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      OrderDetails.countDocuments(filter),
+    ]);
+
+    return successResponse(200, "SUCCESS", { data: rows, pagination: { page, limit, total } }, res);
   } catch (err) {
-    console.log("this", err);
-    console.error("Error creating order:", err);
-    errorResponse(
+    console.error("Error fetching orders:", err);
+    return errorResponse(
       500,
       "SERVER_ERROR",
-      err.message || "An unexpected error occurred while creating the order.",
+      err.message || "An unexpected error occurred while fetching orders.",
       res
     );
   }

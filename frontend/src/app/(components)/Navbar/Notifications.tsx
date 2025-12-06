@@ -64,7 +64,7 @@ const Notifications: React.FC = () => {
     if (type === 'order' || orderId) {
       if (role === 'customer' && orderId) return `/customer/orders/${orderId}`;
       if (role === 'company') return `/business/orders`;
-      if (role === 'admin') return null; // no admin orders page
+      if (role === 'admin') return orderId ? `/admin/orders/${orderId}` : '/admin/orders';
     }
     if (type === 'return' || returnId) {
       if (role === 'company') return `/business/returns`;

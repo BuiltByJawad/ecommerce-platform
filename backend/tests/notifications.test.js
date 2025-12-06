@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import db from '../config/database.config.js';
-import { listMy, markRead, markAllRead } from '../modules/notifications/controllers/notification.controller.js';
+import { listMy, markRead, markAllRead, unreadCount } from '../modules/notifications/controllers/notification.controller.js';
 
 const Notification = db.model.Notification;
 
@@ -59,5 +59,22 @@ describe('Notifications controllers', () => {
 
     const res = await request(app).patch('/api/notifications/read-all').send({});
     expect(res.status).toBe(200);
+  });
+
+  it('unreadCount returns count for authorized user', async () => {
+    const app = makeApp();
+    app.get('/api/notifications/unread-count', injectUser({ _id: 'u1' }), unreadCount);
+    const Notification = db.model.Notification;
+    vi.spyOn(Notification, 'countDocuments').mockResolvedValue(5);
+    const res = await request(app).get('/api/notifications/unread-count');
+    expect(res.status).toBe(200);
+    expect(res.body?.data?.count).toBe(5);
+  });
+
+  it('unreadCount returns 401 when unauthorized', async () => {
+    const app = makeApp();
+    app.get('/api/notifications/unread-count', unreadCount);
+    const res = await request(app).get('/api/notifications/unread-count');
+    expect(res.status).toBe(401);
   });
 });

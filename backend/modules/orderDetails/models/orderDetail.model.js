@@ -154,6 +154,11 @@ const OrderSchema = new Schema(
   }
 );
 
+// Performance indexes
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ email: 1 });
+OrderSchema.index({ status: 1, createdAt: -1 });
+
 const OrderDetails = mongoose.model(
   "OrderDetails",
   OrderSchema

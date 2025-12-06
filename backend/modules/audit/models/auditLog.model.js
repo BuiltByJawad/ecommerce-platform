@@ -23,4 +23,8 @@ if (!Number.isNaN(auditTtlDays) && auditTtlDays > 0) {
   AuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: auditTtlDays * 24 * 60 * 60 });
 }
 
+// Performance indexes for admin audit views
+AuditLogSchema.index({ createdAt: -1 });
+AuditLogSchema.index({ action: 1, createdAt: -1 });
+
 export default mongoose.model("AuditLog", AuditLogSchema);
