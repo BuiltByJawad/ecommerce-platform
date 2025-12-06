@@ -194,6 +194,12 @@ const Sidebar = () => {
               isCollapsed={isSidebarCollapsed}
             />
             <SidebarLink
+              href='/admin/notifications'
+              icon={Bell}
+              label='Notifications'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
               href='/admin/audits'
               icon={History}
               label='Audits'

@@ -22,6 +22,17 @@ export const listMy = async (req, res) => {
   }
 };
 
+export const unreadCount = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) return errorResponse(401, 'FAILED', 'Unauthorized', res);
+    const count = await Notification.countDocuments({ user: userId, read: false });
+    return successResponse(200, 'SUCCESS', { count }, res);
+  } catch (err) {
+    return errorResponse(500, 'ERROR', err.message || 'Failed to fetch unread count', res);
+  }
+};
+
 export const markRead = async (req, res) => {
   try {
     const userId = req.user?._id;

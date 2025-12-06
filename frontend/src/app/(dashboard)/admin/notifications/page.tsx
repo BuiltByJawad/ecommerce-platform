@@ -14,7 +14,7 @@ type NotificationItem = {
   createdAt?: string;
 };
 
-const VendorNotificationsPage: React.FC = () => {
+const AdminNotificationsPage: React.FC = () => {
   const { get, patch } = useAxios();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -60,8 +60,8 @@ const VendorNotificationsPage: React.FC = () => {
   const handleRowClick = async (n: NotificationItem) => {
     await markOne(n._id);
     const t = (n.type || 'general') as string;
-    if (t === 'return') router.push('/business/returns');
-    else if (t === 'order') router.push('/business/orders');
+    if (t === 'return') router.push('/admin/returns');
+    // no deep link for admin orders at the moment
   };
 
   return (
@@ -112,4 +112,4 @@ const VendorNotificationsPage: React.FC = () => {
   );
 };
 
-export default VendorNotificationsPage;
+export default AdminNotificationsPage;
