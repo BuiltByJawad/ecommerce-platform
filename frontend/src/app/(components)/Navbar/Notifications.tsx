@@ -7,6 +7,8 @@ import { getSocket } from './socketClient';
 import { toast } from 'react-toastify';
 import { useAppDispatch, useAppSelector } from '../../redux';
 import { setNotificationsMuted } from '../../state';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type NotificationItem = {
   _id: string;
@@ -22,17 +24,22 @@ const Notifications: React.FC = () => {
   const { get, patch } = useAxios();
   const dispatch = useAppDispatch();
   const muted = useAppSelector((s: any) => s.global.notificationsMuted as boolean);
+  const user = useAppSelector((s: any) => s.global.currentUser as any);
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
   const openRef = useRef<boolean>(false);
+  const [badgeCount, setBadgeCount] = useState<number>(0);
+  const badgeTimerRef = useRef<any>(null);
 
   useEffect(() => {
     openRef.current = open;
   }, [open]);
 
-  const unread = useMemo(() => items.filter((n) => !n.read).length, [items]);
+  const unreadList = useMemo(() => items.filter((n) => !n.read).length, [items]);
+  const badge = open ? unreadList : badgeCount;
 
   const fetchNotifications = async () => {
     try {
@@ -40,22 +47,69 @@ const Notifications: React.FC = () => {
       const res = await get('/notifications/my', { params: { page: 1, limit: 10 } });
       const data = (res?.data?.data?.data as NotificationItem[]) || [];
       setItems(Array.isArray(data) ? data : []);
+      // sync badge with unread when panel is open
+      const unread = Array.isArray(data) ? data.filter((n) => !n.read).length : 0;
+      setBadgeCount(unread);
     } catch (_e) {
     } finally {
       setLoading(false);
     }
   };
 
+  const getItemLink = (n: NotificationItem): string | null => {
+    const role = user?.role;
+    const orderId = (n as any)?.metadata?.orderId as string | undefined;
+    const returnId = (n as any)?.metadata?.returnId as string | undefined;
+    const type = n?.type;
+    if (type === 'order' || orderId) {
+      if (role === 'customer' && orderId) return `/customer/orders/${orderId}`;
+      if (role === 'company') return `/business/orders`;
+      if (role === 'admin') return null; // no admin orders page
+    }
+    if (type === 'return' || returnId) {
+      if (role === 'company') return `/business/returns`;
+      if (role === 'admin') return `/admin/returns`;
+      if (role === 'customer' && orderId) return `/customer/orders/${orderId}`;
+    }
+    return null;
+  };
+
+  const handleRowClick = async (n: NotificationItem) => {
+    await markOne(n._id);
+    const link = getItemLink(n);
+    if (link) {
+      setOpen(false);
+      router.push(link);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await get('/notifications/unread-count');
+      const cnt = Number(res?.data?.data?.count) || 0;
+      setBadgeCount(cnt);
+    } catch (_e) {}
+  };
+
   useEffect(() => {
     fetchNotifications();
   }, []);
 
+  // Poll unread count (lightweight) only when dropdown is closed
   useEffect(() => {
-    const id = setInterval(() => {
-      fetchNotifications();
-    }, 60000);
-    return () => clearInterval(id);
-  }, []);
+    if (!open) {
+      fetchUnreadCount();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      const id = setInterval(() => {
+        fetchUnreadCount();
+      }, 60000);
+      return () => clearInterval(id);
+    }
+  }, [open]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -87,7 +141,26 @@ const Notifications: React.FC = () => {
           position: 'top-right',
           autoClose: 2500,
           closeOnClick: true,
+          onClick: () => {
+            setOpen(true);
+            // mark as read on click of toast
+            // reuse existing API flow
+            (async () => {
+              try {
+                await patch(`/notifications/${n._id}/read`, {});
+                setItems((prev) => prev.map((x) => (x._id === n._id ? { ...x, read: true } : x)));
+                setBadgeCount((prev) => Math.max(0, prev - 1));
+              } catch (_) {}
+            })();
+          },
         });
+      }
+      // debounce badge increments when closed to reduce flicker
+      if (!openRef.current) {
+        if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+        badgeTimerRef.current = setTimeout(() => {
+          setBadgeCount((prev) => prev + 1);
+        }, 150);
       }
       setItems((prev) => {
         const exist = prev.find((x) => x._id === n._id);
@@ -98,8 +171,15 @@ const Notifications: React.FC = () => {
     const onUpdated = (payload: any) => {
       if (payload?.type === 'all') {
         setItems((prev) => prev.map((x) => ({ ...x, read: true })));
+        setBadgeCount(0);
       } else if (payload?.type === 'single' && payload?.id) {
         setItems((prev) => prev.map((x) => (x._id === payload.id ? { ...x, read: true } : x)));
+        if (!openRef.current) {
+          if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+          badgeTimerRef.current = setTimeout(() => {
+            setBadgeCount((prev) => Math.max(0, prev - 1));
+          }, 150);
+        }
       }
     };
     socket.on('notifications:new', onNew);
@@ -138,9 +218,9 @@ const Notifications: React.FC = () => {
         className="relative p-0 border-none bg-transparent outline-none"
       >
         <Bell className="cursor-pointer w-6 h-6" />
-        {unread > 0 && (
+        {badge > 0 && (
           <span className="absolute -top-2 -right-2 min-w-[1.1rem] h-4 px-1 text-[10px] font-semibold text-white bg-red-500 rounded-full flex items-center justify-center leading-none">
-            {unread > 99 ? '99+' : unread}
+            {badge > 99 ? '99+' : badge}
           </span>
         )}
       </button>
@@ -165,6 +245,11 @@ const Notifications: React.FC = () => {
               >
                 <CheckCheck className="w-3 h-3" /> Mark all read
               </button>
+              {user?.role === 'company' ? (
+                <Link href='/business/notifications' className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">View all</Link>
+              ) : user?.role === 'admin' ? (
+                <Link href='/admin/notifications' className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">View all</Link>
+              ) : null}
             </div>
           </div>
           <div className="divide-y dark:divide-gray-700">
@@ -176,7 +261,7 @@ const Notifications: React.FC = () => {
               items.map((n) => (
                 <button
                   key={n._id}
-                  onClick={() => markOne(n._id)}
+                  onClick={() => handleRowClick(n)}
                   className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition ${
                     n.read ? 'opacity-80' : 'bg-yellow-50 dark:bg-yellow-900/20'
                   }`}
