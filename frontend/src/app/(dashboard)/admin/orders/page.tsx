@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import useAxios from '@/context/axiosContext';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { formatDate as formatDateUtil } from '@/utils/date';
 
 interface OrderSummary {
   total: number;
@@ -92,14 +93,7 @@ const AdminOrders: React.FC = () => {
   }, [fetchOrders]);
 
   const formatDate = useCallback(
-    (dateString: string) =>
-      dateString
-        ? new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          })
-        : 'N/A',
+    (dateString: string) => formatDateUtil(dateString, 'N/A'),
     []
   );
 
@@ -267,7 +261,7 @@ const AdminOrders: React.FC = () => {
     defaultColumn: { minSize: 40, size: 100, maxSize: 400 },
   });
 
-return (
+  return (
   <div className={`${theme} w-full max-w-full` }>
     <div className='mb-3 flex items-center gap-2'>
       <select
@@ -431,6 +425,7 @@ return (
     </table>
     </div>
   </div>
-);
+  );
+};
 
 export default AdminOrders;

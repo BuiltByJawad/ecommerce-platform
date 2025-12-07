@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import useAxios from '@/context/axiosContext';
 import { useAppSelector } from '@/app/redux';
 import { useRouter } from 'next/navigation';
+import { formatDateTime } from '@/utils/date';
 
 type AuditLog = {
   _id: string;
@@ -116,7 +117,7 @@ const AuditsPage: React.FC = () => {
             ) : (
               rows.map((r) => (
                 <tr key={r._id} className="border-t dark:border-gray-700">
-                  <td className="p-2 whitespace-nowrap">{r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}</td>
+                  <td className="p-2 whitespace-nowrap">{formatDateTime(r.createdAt)}</td>
                   <td className="p-2">{r.action}</td>
                   <td className="p-2">{r.resourceType}{r.resourceId ? `:${r.resourceId}` : ''}</td>
                   <td className="p-2">{r.actorRole || ''}{r.actor ? `:${r.actor}` : ''}</td>

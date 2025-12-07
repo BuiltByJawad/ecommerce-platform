@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import useAxios from '@/context/axiosContext';
+import AdminTable from '@/app/(components)/AdminTable';
+import { formatDateTime } from '@/utils/date';
 
 interface OrderRow {
   _id: string;
@@ -57,7 +59,7 @@ const AdminTransactionsPage: React.FC = () => {
   }, [page, limit, total]);
 
   return (
-    <div className={`${theme} w-full max-w-full p-4`}>
+    <div className={`${theme} dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800 p-2 font-sans text-slate-900 dark:text-slate-200`}>
       <h1 className='text-xl font-semibold mb-4'>Transactions</h1>
 
       <div className='mb-3 flex flex-wrap items-center gap-2'>
@@ -120,44 +122,63 @@ const AdminTransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className='overflow-x-auto shadow rounded border border-gray-200'>
-        <table className='min-w-full divide-y divide-gray-200 text-sm'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-3 py-2 text-left font-semibold'>Date</th>
-              <th className='px-3 py-2 text-left font-semibold'>Order</th>
-              <th className='px-3 py-2 text-left font-semibold'>Customer</th>
-              <th className='px-3 py-2 text-left font-semibold'>Payment</th>
-              <th className='px-3 py-2 text-left font-semibold'>Status</th>
-              <th className='px-3 py-2 text-left font-semibold'>Transaction</th>
-              <th className='px-3 py-2 text-left font-semibold'>Total</th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {loading ? (
-              <tr>
-                <td className='px-3 py-3' colSpan={7}>Loading...</td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td className='px-3 py-3' colSpan={7}>No transactions found</td>
-              </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r._id} className='hover:bg-gray-50'>
-                  <td className='px-3 py-2'>{new Date(r.createdAt).toLocaleString()}</td>
-                  <td className='px-3 py-2'>{r._id.slice(-6)}</td>
-                  <td className='px-3 py-2'>{r.email || '-'}</td>
-                  <td className='px-3 py-2'>{(r.paymentMethod || '-').toUpperCase()}</td>
-                  <td className='px-3 py-2'>{r.status || '-'}</td>
-                  <td className='px-3 py-2'>{r.transactionId || '-'}</td>
-                  <td className='px-3 py-2'>${Number(r.orderSummary?.total || 0).toFixed(2)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        columns={[
+          'Date',
+          'Order',
+          'Customer',
+          'Payment',
+          'Status',
+          'Transaction',
+          'Total',
+        ]}
+        columnAlign={['left','left','left','left','left','left','right']}
+        loading={loading}
+        dataLength={rows.length}
+        emptyMessage='No transactions found'
+        stickyHeader
+        stickyMaxHeight='70vh'
+        footer={(
+          <div className='flex items-center gap-2 justify-end'>
+            <div className='text-xs text-gray-600'>{pageInfo}</div>
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Prev
+            </button>
+            <button
+              disabled={page * limit >= total}
+              onClick={() => setPage((p) => p + 1)}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Next
+            </button>
+            <select
+              value={limit}
+              onChange={(e) => { setPage(1); setLimit(parseInt(e.target.value)); }}
+              className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        )}
+      >
+        {rows.map((r) => (
+          <tr key={r._id} className='hover:bg-slate-50/60 dark:hover:bg-slate-700/40'>
+            <td className='px-3 py-2'>{formatDateTime(r.createdAt)}</td>
+            <td className='px-3 py-2'>{r._id.slice(-6)}</td>
+            <td className='px-3 py-2'>{r.email || '-'}</td>
+            <td className='px-3 py-2'>{(r.paymentMethod || '-').toUpperCase()}</td>
+            <td className='px-3 py-2'>{r.status || '-'}</td>
+            <td className='px-3 py-2'>{r.transactionId || '-'}</td>
+            <td className='px-3 py-2'>${Number(r.orderSummary?.total || 0).toFixed(2)}</td>
+          </tr>
+        ))}
+      </AdminTable>
     </div>
   );
 };

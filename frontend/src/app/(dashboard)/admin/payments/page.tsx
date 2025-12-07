@@ -3,6 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import useAxios from '@/context/axiosContext';
+import AdminTable from '@/app/(components)/AdminTable';
+import AdminToolbar from '@/app/(components)/AdminToolbar';
+import { formatDateTime } from '@/utils/date';
 
 interface PaymentDoc {
   _id: string;
@@ -50,79 +53,116 @@ const AdminPaymentsPage: React.FC = () => {
   }, [page, limit, total]);
 
   return (
-    <div className={`${theme} w-full max-w-full p-4`}>
+    <div className={`${theme} dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800 p-2 font-sans text-slate-900 dark:text-slate-200`}>
       <h1 className='text-xl font-semibold mb-4'>Payments</h1>
 
-      <div className='mb-3 flex flex-wrap items-center gap-2'>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder='Filter by customer email'
-          className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
-        />
-        <button onClick={() => { setPage(1); fetchData(); }} className='px-2 py-1 border rounded dark:border-gray-700'>Apply</button>
-        <div className='ml-auto flex items-center gap-2'>
-          <div className='text-xs text-gray-600'>{pageInfo}</div>
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
-          >
-            Prev
-          </button>
-          <button
-            disabled={page * limit >= total}
-            onClick={() => setPage((p) => p + 1)}
-            className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
-          >
-            Next
-          </button>
-          <select
-            value={limit}
-            onChange={(e) => { setPage(1); setLimit(parseInt(e.target.value)); }}
-            className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-        </div>
-      </div>
+      <AdminToolbar
+        left={(
+          <>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder='Filter by customer email'
+              className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+            />
+            <button onClick={() => { setPage(1); fetchData(); }} className='px-2 py-1 border rounded dark:border-gray-700'>Apply</button>
+            <button
+              onClick={() => {
+                const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+                const params = new URLSearchParams();
+                if (email.trim()) params.set('email', email.trim());
+                const url = `${base}/payments/admin/export${params.toString() ? `?${params.toString()}` : ''}`;
+                window.open(url, '_blank');
+              }}
+              className='px-2 py-1 border rounded dark:border-gray-700'
+            >
+              Export CSV
+            </button>
+          </>
+        )}
+        right={(
+          <>
+            <div className='text-xs text-gray-600'>{pageInfo}</div>
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Prev
+            </button>
+            <button
+              disabled={page * limit >= total}
+              onClick={() => setPage((p) => p + 1)}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Next
+            </button>
+            <select
+              value={limit}
+              onChange={(e) => { setPage(1); setLimit(parseInt(e.target.value)); }}
+              className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </>
+        )}
+      />
 
-      <div className='overflow-x-auto shadow rounded border border-gray-200'>
-        <table className='min-w-full divide-y divide-gray-200 text-sm'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-3 py-2 text-left font-semibold'>Date</th>
-              <th className='px-3 py-2 text-left font-semibold'>Customer</th>
-              <th className='px-3 py-2 text-left font-semibold'>Items</th>
-              <th className='px-3 py-2 text-left font-semibold'>Total</th>
-              <th className='px-3 py-2 text-left font-semibold'>Session</th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {loading ? (
-              <tr>
-                <td className='px-3 py-3' colSpan={5}>Loading...</td>
-              </tr>
-            ) : data.length === 0 ? (
-              <tr>
-                <td className='px-3 py-3' colSpan={5}>No payments found</td>
-              </tr>
-            ) : (
-              data.map((p) => (
-                <tr key={p._id} className='hover:bg-gray-50'>
-                  <td className='px-3 py-2'>{new Date(p.createdAt).toLocaleString()}</td>
-                  <td className='px-3 py-2'>{p.user?.email || '-'}</td>
-                  <td className='px-3 py-2'>{Array.isArray(p.products) ? p.products.reduce((acc, it) => acc + (it.quantity || 0), 0) : 0}</td>
-                  <td className='px-3 py-2'>${Number(p.totalAmount || 0).toFixed(2)}</td>
-                  <td className='px-3 py-2'>{p.stripeSessionId || '-'}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        columns={[
+          'Date',
+          'Customer',
+          'Items',
+          'Total',
+          'Session',
+        ]}
+        columnAlign={['left','left','center','right','left']}
+        loading={loading}
+        dataLength={data.length}
+        emptyMessage='No payments found'
+        stickyHeader
+        stickyMaxHeight='70vh'
+        footer={(
+          <div className='flex items-center gap-2 justify-end'>
+            <div className='text-xs text-gray-600'>{pageInfo}</div>
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Prev
+            </button>
+            <button
+              disabled={page * limit >= total}
+              onClick={() => setPage((p) => p + 1)}
+              className='px-2 py-1 border rounded disabled:opacity-50 dark:border-gray-700'
+            >
+              Next
+            </button>
+            <select
+              value={limit}
+              onChange={(e) => { setPage(1); setLimit(parseInt(e.target.value)); }}
+              className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        )}
+      >
+        {data.map((p) => (
+          <tr key={p._id} className='hover:bg-slate-50/60 dark:hover:bg-slate-700/40'>
+            <td className='px-3 py-2'>{formatDateTime(p.createdAt)}</td>
+            <td className='px-3 py-2'>{p.user?.email || '-'}</td>
+            <td className='px-3 py-2'>{Array.isArray(p.products) ? p.products.reduce((acc, it) => acc + (it.quantity || 0), 0) : 0}</td>
+            <td className='px-3 py-2'>${Number(p.totalAmount || 0).toFixed(2)}</td>
+            <td className='px-3 py-2'>{p.stripeSessionId || '-'}</td>
+          </tr>
+        ))}
+      </AdminTable>
     </div>
   );
 };

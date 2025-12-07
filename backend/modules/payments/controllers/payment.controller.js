@@ -354,16 +354,20 @@ export const exportPaymentsCsv = async (req, res) => {
     }
     const rows = await Payment.find(filter).sort({ createdAt: -1 }).limit(lim).populate('user', 'email').lean();
     const headers = ['id','createdAt','userEmail','totalAmount','itemsCount','stripeSessionId'];
-    const escape = (v) => { if (v -eq $null) { return '' } $s = ("" + $v).Replace('"','""'); return '"' + $s + '"' };
-    $lines = @(); $lines += ($headers -join ',');
-    foreach ($r in $rows) {
-      $itemsCount = 0; if ($r.products -and $r.products.Count) { foreach ($it in $r.products) { $itemsCount += [int]($it.quantity) } }
-      $lines += (@($r._id, ($r.createdAt ? [DateTime]$r.createdAt : $null), ($r.user.email), [string]::Format('{0:F2}', [double]($r.totalAmount || 0)), $itemsCount, ($r.stripeSessionId)) | ForEach-Object { $_ }) -join ','
+    const escapeCsv = (v) => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g,'""');
+      return `"${s}"`;
+    };
+    const lines = [headers.join(',')];
+    for (const r of rows) {
+      const itemsCount = Array.isArray(r.products) ? r.products.reduce((acc, it) => acc + (Number(it.quantity)||0), 0) : 0;
+      lines.push([r._id, r.createdAt ? new Date(r.createdAt).toISOString() : '', r.user?.email || '', Number(r.totalAmount || 0).toFixed(2), itemsCount, r.stripeSessionId || ''].map(escapeCsv).join(','));
     }
-    $csv = [string]::Join("`n", $lines);
+    const csv = lines.join('\n');
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
-    return res.status(200).send($csv);
+    return res.status(200).send(csv);
   } catch (error) {
     return errorResponse(500, 'ERROR', error?.message || 'Failed to export payments', res);
   }

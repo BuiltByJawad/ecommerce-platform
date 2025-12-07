@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import useAxios from '@/context/axiosContext';
 import { useRouter } from 'next/navigation';
+import { formatDateTime } from '@/utils/date';
 
 type NotificationItem = {
   _id: string;
@@ -98,7 +99,7 @@ const VendorNotificationsPage: React.FC = () => {
                 <div>
                   <div className="text-sm font-semibold">{n.title}</div>
                   <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line">{n.message}</div>
-                  <div className="mt-1 text-[10px] text-gray-500">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                  <div className="mt-1 text-[10px] text-gray-500">{formatDateTime(n.createdAt)}</div>
                 </div>
                 {!n.read && (
                   <span className="text-[10px] px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-700">New</span>

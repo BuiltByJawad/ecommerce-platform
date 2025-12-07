@@ -27,6 +27,7 @@ import { useTheme } from 'next-themes';
 import React, { useState, useEffect } from 'react';
 import { SidebarLink } from './SidebarLink';
 import { useSystemSettings } from '@/utils/SystemSettingsProvider';
+import { currentYear as currentYearUtil } from '@/utils/date';
 
 const Sidebar = () => {
   const dispatch = useAppDispatch();
@@ -37,9 +38,9 @@ const Sidebar = () => {
   const [showLogo, setShowLogo] = useState(!isSidebarCollapsed);
   const { settings } = useSystemSettings();
   const siteName = settings?.short_name || settings?.website_name || 'Ecommerce';
-  const currentYear = new Date().getFullYear();
+  const year = currentYearUtil();
   const copyrightText =
-    settings?.copyright || `© ${currentYear} ${siteName}`;
+    settings?.copyright || `© ${year} ${siteName}`;
 
   const toggleSidebar = () => {
     dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
@@ -155,6 +156,12 @@ const Sidebar = () => {
               href='/admin/companies'
               icon={Building}
               label='Companies'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/admin/orders'
+              icon={ShoppingCart}
+              label='Orders'
               isCollapsed={isSidebarCollapsed}
             />
             <SidebarLink
@@ -280,6 +287,12 @@ const Sidebar = () => {
               href='/business/notifications'
               icon={Bell}
               label='Notifications'
+              isCollapsed={isSidebarCollapsed}
+            />
+            <SidebarLink
+              href='/business/settings'
+              icon={SettingsIcon}
+              label='Settings'
               isCollapsed={isSidebarCollapsed}
             />
           </>

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
+import { formatDateTime } from '@/utils/date';
 
 type OrderItem = {
   productId: string;
@@ -115,7 +116,7 @@ const AdminOrderDetailsPage: React.FC = () => {
               <div className="text-sm text-gray-700 dark:text-gray-300">{order.phone}</div>
               <div className="text-sm text-gray-700 dark:text-gray-300">{order.address}, {order.city}, {order.country}</div>
               {order.createdAt && (
-                <div className="text-xs text-gray-500 mt-2">Placed: {new Date(order.createdAt).toLocaleString()}</div>
+                <div className="text-xs text-gray-500 mt-2">Placed: {formatDateTime(order.createdAt)}</div>
               )}
             </div>
 

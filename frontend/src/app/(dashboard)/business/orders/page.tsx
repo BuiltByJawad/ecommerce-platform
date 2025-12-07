@@ -14,6 +14,7 @@ import { toast } from 'react-toastify';
 import useAxios from '@/context/axiosContext';
 import { useTheme } from 'next-themes';
 import { useAppSelector } from '../../../redux';
+import { formatDate as formatDateUtil } from '@/utils/date';
 
 interface VendorOrderItem {
   productId: string;
@@ -76,14 +77,7 @@ const Orders: React.FC = () => {
   );
 
   const formatDate = useCallback(
-    (dateString: string) =>
-      dateString
-        ? new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          })
-        : 'N/A',
+    (dateString: string) => formatDateUtil(dateString, 'N/A'),
     []
   );
 

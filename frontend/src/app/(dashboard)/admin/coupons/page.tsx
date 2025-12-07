@@ -42,6 +42,8 @@ const AdminCouponsPage: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ discount_type?: 'percent' | 'fixed'; value?: number }>({});
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   const [form, setForm] = useState({
     code: '',
     ownerType: 'admin' as 'admin' | 'vendor' | 'system',
@@ -71,7 +73,8 @@ const AdminCouponsPage: React.FC = () => {
       const res = await get(`/coupons/admin/list?${params.toString()}`, {});
       setCoupons(res?.data?.data?.data || []);
     } catch (e: any) {
-      toast.error(e?.response?.data?.data?.error || 'Failed to load coupons');
+      console.error(e);
+      setCoupons([]);
     } finally {
       setLoading(false);
     }
@@ -138,12 +141,19 @@ const AdminCouponsPage: React.FC = () => {
   };
 
   const onCreate = async () => {
-    if (!form.code || !form.value) {
-      toast.error('Code and value are required');
-      return;
+    const nextErrors: { [key: string]: string } = {};
+    if (!form.code.trim()) {
+      nextErrors.code = 'Code is required';
+    }
+    if (!form.value && form.value !== 0) {
+      nextErrors.value = 'Value is required';
     }
     if (form.ownerType === 'vendor' && !form.seller) {
-      toast.error('Select a vendor for vendor coupons');
+      nextErrors.seller = 'Vendor is required for vendor coupons';
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
     try {
@@ -172,6 +182,7 @@ const AdminCouponsPage: React.FC = () => {
           scope: 'global',
           isActive: true,
         });
+        setErrors({});
       }
     } catch (e: any) {
       toast.error(e?.response?.data?.data?.error || 'Create failed');
@@ -188,16 +199,21 @@ const AdminCouponsPage: React.FC = () => {
       <div className='bg-white dark:bg-gray-800 rounded border p-3 mb-4'>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
           <div>
-            <label className='text-xs block mb-1'>Code</label>
+            <label className='text-xs block mb-1'>
+              Code <span className='text-red-500'>*</span>
+            </label>
             <input
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-              className='w-full border rounded px-2 py-1 text-sm dark:bg-gray-700'
+              className={`w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 ${errors.code ? 'border-red-500' : ''}`}
               placeholder='e.g. SAVE10'
             />
+            {errors.code && <p className='text-xs text-red-500 mt-1'>{errors.code}</p>}
           </div>
           <div>
-            <label className='text-xs block mb-1'>Owner</label>
+            <label className='text-xs block mb-1'>
+              Owner <span className='text-red-500'>*</span>
+            </label>
             <select
               value={form.ownerType}
               onChange={(e) => setForm({ ...form, ownerType: e.target.value as any })}
@@ -210,11 +226,13 @@ const AdminCouponsPage: React.FC = () => {
           </div>
           {form.ownerType === 'vendor' && (
             <div>
-              <label className='text-xs block mb-1'>Vendor</label>
+              <label className='text-xs block mb-1'>
+                Vendor <span className='text-red-500'>*</span>
+              </label>
               <select
                 value={form.seller}
                 onChange={(e) => setForm({ ...form, seller: e.target.value })}
-                className='w-full border rounded px-2 py-1 text-sm dark:bg-gray-700'
+                className={`w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 ${errors.seller ? 'border-red-500' : ''}`}
               >
                 <option value=''>Select vendor</option>
                 {vendors.map((v) => (
@@ -223,10 +241,13 @@ const AdminCouponsPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+              {errors.seller && <p className='text-xs text-red-500 mt-1'>{errors.seller}</p>}
             </div>
           )}
           <div>
-            <label className='text-xs block mb-1'>Type</label>
+            <label className='text-xs block mb-1'>
+              Type <span className='text-red-500'>*</span>
+            </label>
             <select
               value={form.discount_type}
               onChange={(e) => setForm({ ...form, discount_type: e.target.value as any })}
@@ -237,14 +258,17 @@ const AdminCouponsPage: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className='text-xs block mb-1'>Value</label>
+            <label className='text-xs block mb-1'>
+              Value <span className='text-red-500'>*</span>
+            </label>
             <input
               type='number'
               value={form.value}
               onChange={(e) => setForm({ ...form, value: Number(e.target.value) })}
-              className='w-full border rounded px-2 py-1 text-sm dark:bg-gray-700'
+              className={`w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 ${errors.value ? 'border-red-500' : ''}`}
               min={0}
             />
+            {errors.value && <p className='text-xs text-red-500 mt-1'>{errors.value}</p>}
           </div>
           <div>
             <label className='text-xs block mb-1'>Min Order</label>
