@@ -1,4 +1,4 @@
-import db from "../../../config/database.config.js";
+﻿import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
 import { updateProfile, updatePassword } from "./userSettings.controller.js";
@@ -15,41 +15,6 @@ export const findAll = async (req, res) => {
     const role = (req.query.role || '').toString().trim();
 
     const filter = {};
-
-export const adminUpdateUserRole = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { role } = req.body || {};
-    const allowed = ["customer", "company", "admin"];
-    if (!role || !allowed.includes(role)) {
-      return errorResponse(400, "FAILED", "Invalid role", res);
-    }
-
-    // Prevent self-demotion
-    if (String(req.user?._id) === String(id)) {
-      return errorResponse(400, "FAILED", "You cannot change your own role", res);
-    }
-
-    const user = await User.findByIdAndUpdate(
-      id,
-      { role },
-      { new: true }
-    ).select("-password");
-
-    if (!user) {
-      return errorResponse(404, "FAILED", "User not found", res);
-    }
-
-    return successResponse(200, "SUCCESS", { user }, res);
-  } catch (err) {
-    return errorResponse(
-      500,
-      "ERROR",
-      err.message || "Failed to update user role",
-      res
-    );
-  }
-};
     if (role) (filter).role = role;
     if (q) {
       (filter).$or = [
@@ -74,6 +39,7 @@ export const adminUpdateUserRole = async (req, res) => {
     errorResponse(500, 'ERROR', err.message || 'Some error occurred while Finding User', res);
   }
 };
+ 
 
 export const adminGetVendorPermissions = async (req, res) => {
   try {
@@ -369,4 +335,29 @@ export const adminUpdateVendorStatus = async (req, res) => {
 };
 
 // Export the settings controller methods
+
+ 
+
+export const adminUpdateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body || {};
+    const allowed = ["customer", "company", "admin"];
+    if (!role || !allowed.includes(role)) {
+      return errorResponse(400, "FAILED", "Invalid role", res);
+    }
+    if (String(req.user?._id) === String(id)) {
+      return errorResponse(400, "FAILED", "You cannot change your own role", res);
+    }
+    const user = await User.findByIdAndUpdate(id, { role }, { new: true }).select("-password");
+    if (!user) {
+      return errorResponse(404, "FAILED", "User not found", res);
+    }
+    return successResponse(200, "SUCCESS", { user }, res);
+  } catch (err) {
+    return errorResponse(500, "ERROR", err.message || "Failed to update user role", res);
+  }
+};
 export { updateProfile, updatePassword };
+
+

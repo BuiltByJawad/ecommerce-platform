@@ -1,14 +1,3 @@
-  const handleRoleChange = useCallback(
-    async (id: string, newRole: string) => {
-      try {
-        await put(`/users/admin/users/${id}/role`, { role: newRole });
-        setRows((prev) => prev.map((u) => (u._id === id ? { ...u, role: newRole } : u)));
-      } catch (_e) {
-        // no-op; backend may reject (e.g., self-demotion). You can add toast here if desired.
-      }
-    },
-    [put]
-  );
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,6 +17,17 @@ interface UserDoc {
 const AdminUsersPage: React.FC = () => {
   const { theme } = useTheme();
   const { get, put } = useAxios();
+  const handleRoleChange = useCallback(
+    async (id: string, newRole: string) => {
+      try {
+        await put(`/users/admin/users/${id}/role`, { role: newRole });
+        setRows((prev) => prev.map((u) => (u._id === id ? { ...u, role: newRole } : u)));
+      } catch (_e) {
+        // no-op; backend may reject (e.g., self-demotion). You can add toast here if desired.
+      }
+    },
+    [put]
+  );
 
   const [rows, setRows] = useState<UserDoc[]>([]);
   const [page, setPage] = useState<number>(1);
