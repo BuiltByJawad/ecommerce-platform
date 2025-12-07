@@ -26,6 +26,9 @@ export const verifyToken = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
+    if (user.active === false) {
+      return res.status(403).json({ message: "Account disabled" });
+    }
     req.user = user;
     next();
   } catch (error) {

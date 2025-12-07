@@ -61,6 +61,18 @@ const AdminPaymentsPage: React.FC = () => {
           className='px-2 py-1 border rounded dark:border-gray-700 dark:bg-gray-800'
         />
         <button onClick={() => { setPage(1); fetchData(); }} className='px-2 py-1 border rounded dark:border-gray-700'>Apply</button>
+        <button
+          onClick={() => {
+            const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+            const params = new URLSearchParams();
+            if (email.trim()) params.set('email', email.trim());
+            const url = `${base}/payments/admin/export${params.toString() ? `?${params.toString()}` : ''}`;
+            window.open(url, '_blank');
+          }}
+          className='px-2 py-1 border rounded dark:border-gray-700'
+        >
+          Export CSV
+        </button>
         <div className='ml-auto flex items-center gap-2'>
           <div className='text-xs text-gray-600'>{pageInfo}</div>
           <button

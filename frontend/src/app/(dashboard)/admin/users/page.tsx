@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import useAxios from '@/context/axiosContext';
+import Link from 'next/link';
 
 interface UserDoc {
   _id: string;
@@ -12,21 +13,41 @@ interface UserDoc {
   l_name?: string;
   company_name?: string;
   createdAt?: string;
+  active?: boolean;
 }
 
 const AdminUsersPage: React.FC = () => {
   const { theme } = useTheme();
   const { get, put } = useAxios();
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  }, []);
   const handleRoleChange = useCallback(
     async (id: string, newRole: string) => {
       try {
         await put(`/users/admin/users/${id}/role`, { role: newRole });
         setRows((prev) => prev.map((u) => (u._id === id ? { ...u, role: newRole } : u)));
+        showToast('Role updated', 'success');
       } catch (_e) {
-        // no-op; backend may reject (e.g., self-demotion). You can add toast here if desired.
+        showToast('Failed to update role', 'error');
       }
     },
-    [put]
+    [put, showToast]
+  );
+
+  const handleActiveToggle = useCallback(
+    async (id: string, nextActive: boolean) => {
+      try {
+        await put(`/users/admin/users/${id}/active`, { active: nextActive });
+        setRows((prev) => prev.map((u) => (u._id === id ? { ...u, active: nextActive } : u)));
+        showToast(nextActive ? 'User enabled' : 'User disabled', 'success');
+      } catch (_e) {
+        showToast('Failed to update active status', 'error');
+      }
+    },
+    [put, showToast]
   );
 
   const [rows, setRows] = useState<UserDoc[]>([]);
@@ -65,6 +86,11 @@ const AdminUsersPage: React.FC = () => {
 
   return (
     <div className={`${theme} w-full max-w-full p-4`}>
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-3 py-2 rounded shadow text-sm ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          {toast.msg}
+        </div>
+      )}
       <h1 className='text-xl font-semibold mb-4'>Users</h1>
 
       <div className='mb-3 flex flex-wrap items-center gap-2'>
@@ -127,21 +153,30 @@ const AdminUsersPage: React.FC = () => {
               <th className='px-3 py-2 text-left font-semibold'>Name</th>
               <th className='px-3 py-2 text-left font-semibold'>Company</th>
               <th className='px-3 py-2 text-left font-semibold'>Created</th>
+              <th className='px-3 py-2 text-left font-semibold'>Active</th>
+              <th className='px-3 py-2 text-left font-semibold'>Actions</th>
             </tr>
           </thead>
           <tbody className='bg-white divide-y divide-gray-200'>
             {loading ? (
               <tr>
-                <td className='px-3 py-3' colSpan={5}>Loading...</td>
+                <td className='px-3 py-3' colSpan={7}>Loading...</td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td className='px-3 py-3' colSpan={5}>No users found</td>
+                <td className='px-3 py-3' colSpan={7}>No users found</td>
               </tr>
             ) : (
               rows.map((u) => (
                 <tr key={u._id} className='hover:bg-gray-50'>
-                  <td className='px-3 py-2'>{u.email}</td>
+                  <td className='px-3 py-2'>
+                    <div className='flex items-center gap-2'>
+                      <span>{u.email}</span>
+                      {u.active === false && (
+                        <span className='text-xs px-2 py-0.5 rounded border bg-red-50 text-red-700 border-red-200'>Disabled</span>
+                      )}
+                    </div>
+                  </td>
                   <td className='px-3 py-2'>
                     <select
                       value={u.role || ''}
@@ -156,6 +191,16 @@ const AdminUsersPage: React.FC = () => {
                   <td className='px-3 py-2'>{[u.f_name, u.l_name].filter(Boolean).join(' ') || '-'}</td>
                   <td className='px-3 py-2'>{u.company_name || '-'}</td>
                   <td className='px-3 py-2'>{u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
+                  <td className='px-3 py-2'>
+                    <input
+                      type='checkbox'
+                      checked={!!u.active}
+                      onChange={(e) => handleActiveToggle(u._id, e.target.checked)}
+                    />
+                  </td>
+                  <td className='px-3 py-2'>
+                    <Link href={`/admin/users/${u._id}`} className='text-blue-600 hover:underline'>View</Link>
+                  </td>
                 </tr>
               ))
             )}

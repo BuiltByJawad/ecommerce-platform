@@ -46,6 +46,12 @@ userRouter.put(
   userController.adminUpdateVendorPermissions
 );
 userRouter.put("/admin/users/:id/role", protectedRoute, adminRoute, userController.adminUpdateUserRole);
+userRouter.put(
+  "/admin/users/:id/active",
+  protectedRoute,
+  adminRoute,
+  userController.adminUpdateUserActive
+);
 export default (app) => {
   app.use("/api/users", userRouter);
 };

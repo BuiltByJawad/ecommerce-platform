@@ -358,6 +358,27 @@ export const adminUpdateUserRole = async (req, res) => {
     return errorResponse(500, "ERROR", err.message || "Failed to update user role", res);
   }
 };
+
+export const adminUpdateUserActive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { active } = req.body || {};
+    if (typeof active !== 'boolean') {
+      return errorResponse(400, "FAILED", "Invalid active flag", res);
+    }
+    if (String(req.user?._id) === String(id) && active === false) {
+      return errorResponse(400, "FAILED", "You cannot disable your own account", res);
+    }
+    const user = await User.findByIdAndUpdate(id, { active }, { new: true }).select("-password");
+    if (!user) {
+      return errorResponse(404, "FAILED", "User not found", res);
+    }
+    return successResponse(200, "SUCCESS", { user }, res);
+  } catch (err) {
+    return errorResponse(500, "ERROR", err.message || "Failed to update user active status", res);
+  }
+};
+
 export { updateProfile, updatePassword };
 
 
