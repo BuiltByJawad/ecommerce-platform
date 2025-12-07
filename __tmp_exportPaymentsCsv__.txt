@@ -1,0 +1,44 @@
+export const exportPaymentsCsv = async (req, res) => {
+  try {
+    const { email, from, to } = req.query || {};
+    const limit = Math.min(parseInt(req.query.limit) || 5000, 20000);
+    const filter = {};
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+    if (email) {
+      const users = await User.find({ email: new RegExp(String(email), 'i') }).select('_id').lean();
+      const userIds = users.map((u) => u._id);
+      if (userIds.length === 0) {
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
+        return res.status(200).send('id,createdAt,userEmail,totalAmount,itemsCount,stripeSessionId\n');
+      }
+      filter.user = { $in: userIds };
+    }
+    const rows = await Payment.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('user', 'email')
+      .lean();
+    const headers = ['id','createdAt','userEmail','totalAmount','itemsCount','stripeSessionId'];
+    const esc = (v) => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g,'""');
+      return `"${s}"`;
+    };
+    const lines = [headers.join(',')];
+    for (const r of rows) {
+      const itemsCount = Array.isArray(r.products) ? r.products.reduce((a, it) => a + (Number(it.quantity)||0), 0) : 0;
+      lines.push([r._id, r.createdAt ? new Date(r.createdAt).toISOString() : '', r.user?.email || '', Number(r.totalAmount || 0).toFixed(2), itemsCount, r.stripeSessionId || ''].map(esc).join(','));
+    }
+    const csv = lines.join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
+    return res.status(200).send(csv);
+  } catch (error) {
+    return errorResponse(500, 'ERROR', error?.message || 'Failed to export payments', res);
+  }
+};

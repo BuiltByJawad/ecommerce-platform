@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import * as userController from "../controllers/user.controller.js";
 import userPhotoUploadMulter from "../../../middlewares/uploadUserPhoto.js";
 import { protectedRoute, verifyToken, adminRoute } from "../../../middlewares/authJwt.js";
@@ -45,6 +45,8 @@ userRouter.put(
   adminRoute,
   userController.adminUpdateVendorPermissions
 );
+userRouter.put("/admin/users/:id/role", protectedRoute, adminRoute, userController.adminUpdateUserRole);
 export default (app) => {
   app.use("/api/users", userRouter);
 };
+

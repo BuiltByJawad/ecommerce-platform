@@ -1,4 +1,4 @@
-import db from "../../../config/database.config.js";
+﻿import db from "../../../config/database.config.js";
 import errorResponse from "../../../utils/errorResponse.js";
 import successResponse from "../../../utils/successResponse.js";
 import Coupon from "../../coupons/models/coupon.model.js";
@@ -329,5 +329,42 @@ export const listPayments = async (req, res) => {
     );
   } catch (error) {
     return errorResponse(500, 'ERROR', error?.message || 'Failed to list payments', res);
+  }
+};
+
+export const exportPaymentsCsv = async (req, res) => {
+  try {
+    const { email, from, to } = req.query || {};
+    const lim = Math.min(parseInt(req.query.limit) || 5000, 20000);
+    const filter = {};
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+    if (email) {
+      const users = await User.find({ email: new RegExp(String(email), 'i') }).select('_id').lean();
+      const userIds = users.map((u) => u._id);
+      if (userIds.length === 0) {
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
+        return res.status(200).send('id,createdAt,userEmail,totalAmount,itemsCount,stripeSessionId\n');
+      }
+      filter.user = { $in: userIds };
+    }
+    const rows = await Payment.find(filter).sort({ createdAt: -1 }).limit(lim).populate('user', 'email').lean();
+    const headers = ['id','createdAt','userEmail','totalAmount','itemsCount','stripeSessionId'];
+    const escape = (v) => { if (v -eq $null) { return '' } $s = ("" + $v).Replace('"','""'); return '"' + $s + '"' };
+    $lines = @(); $lines += ($headers -join ',');
+    foreach ($r in $rows) {
+      $itemsCount = 0; if ($r.products -and $r.products.Count) { foreach ($it in $r.products) { $itemsCount += [int]($it.quantity) } }
+      $lines += (@($r._id, ($r.createdAt ? [DateTime]$r.createdAt : $null), ($r.user.email), [string]::Format('{0:F2}', [double]($r.totalAmount || 0)), $itemsCount, ($r.stripeSessionId)) | ForEach-Object { $_ }) -join ','
+    }
+    $csv = [string]::Join("`n", $lines);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
+    return res.status(200).send($csv);
+  } catch (error) {
+    return errorResponse(500, 'ERROR', error?.message || 'Failed to export payments', res);
   }
 };
