@@ -20,7 +20,6 @@ import {
   AlertTriangle,
   UploadCloud,
 } from 'lucide-react';
-import Image from 'next/image';
 import useAxios from '@/context/axiosContext';
 
 // Interface for the System Settings data
@@ -66,6 +65,7 @@ const SystemSettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [favFile, setFavFile] = useState<File | null>(null);
@@ -148,9 +148,30 @@ const SystemSettingsPage: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSaving(true);
     setError(null);
     setSuccessMessage(null);
+
+    const nextErrors: Record<string, string> = {};
+    if (!String(settings.website_name || '').trim()) {
+      nextErrors.website_name = 'Website name is required';
+    }
+    if (!String(settings.short_name || '').trim()) {
+      nextErrors.short_name = 'Short name is required';
+    }
+    if (!settings.logo_image) {
+      nextErrors.logo_image = 'Logo image is required';
+    }
+    if (!settings.fav_image) {
+      nextErrors.fav_image = 'Favicon image is required';
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+    setFieldErrors({});
+
+    setIsSaving(true);
 
     try {
       const payload: any = { ...settings };
@@ -216,6 +237,7 @@ const SystemSettingsPage: React.FC = () => {
       type: 'text',
       icon: Type,
       fullWidth: false,
+      required: true,
     },
     {
       name: 'mobile',
@@ -223,6 +245,7 @@ const SystemSettingsPage: React.FC = () => {
       type: 'tel',
       icon: Smartphone,
       fullWidth: false,
+      required: true,
     },
     {
       name: 'logo_image',
@@ -231,6 +254,7 @@ const SystemSettingsPage: React.FC = () => {
       icon: UploadCloud,
       fullWidth: false,
       accept: 'image/*',
+      required: true,
     },
     {
       name: 'fav_image',
@@ -238,7 +262,9 @@ const SystemSettingsPage: React.FC = () => {
       type: 'file',
       icon: UploadCloud,
       fullWidth: false,
-      accept: 'image/x-icon, image/png, image/svg+xml, image/jpeg, image/gif, image/webp',
+      accept:
+        'image/x-icon, image/png, image/svg+xml, image/jpeg, image/gif, image/webp',
+      required: true,
     },
     {
       name: 'days_of_week',
@@ -330,15 +356,9 @@ const SystemSettingsPage: React.FC = () => {
             >
               <field.icon className='h-5 w-5 mr-2 text-sky-600 dark:text-sky-400 flex-shrink-0' />
               {field.label}
-              {field.required &&
-                // Check if the value is empty or (for numbers) if it's an empty string
-                (settings[field.name as keyof SystemSettingsData] === '' ||
-                  settings[field.name as keyof SystemSettingsData] === null ||
-                  settings[field.name as keyof SystemSettingsData] === undefined) &&
-                (field.type !== 'file' || // For file, required means an initial file must be there or selected
-                  !settings[field.name as keyof SystemSettingsData]) && (
-                  <span className='text-red-500 dark:text-red-400 ml-1'>*</span>
-                )}
+              {field.required && (
+                <span className='text-red-500 dark:text-red-400 ml-1'>*</span>
+              )}
             </label>
             {field.type === 'textarea' ? (
               <textarea
@@ -347,7 +367,7 @@ const SystemSettingsPage: React.FC = () => {
                 value={settings[field.name as keyof SystemSettingsData] as string}
                 onChange={handleChange}
                 rows={3}
-                className='w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700'
+                className={`w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 ${fieldErrors[field.name] ? 'border-red-500' : ''}`}
                 placeholder={`Enter ${field.label.toLowerCase()}`}
                 required={field.required}
               />
@@ -357,7 +377,7 @@ const SystemSettingsPage: React.FC = () => {
                 name={field.name}
                 value={settings[field.name as keyof SystemSettingsData]}
                 onChange={handleChange}
-                className='w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                className={`w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 ${fieldErrors[field.name] ? 'border-red-500' : ''}`}
                 required={field.required}
               >
                 {field.options?.map((option) => (
@@ -382,11 +402,11 @@ const SystemSettingsPage: React.FC = () => {
                   // File input required logic might mean an initial file must exist or one must be selected
                   field.required &&
                   !settings[field.name as keyof SystemSettingsData] &&
-                  !(name === 'logo_image' ? logoFile : favFile)
+                  !(field.name === 'logo_image' ? logoFile : favFile)
                 }
-                className='w-full text-sm text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md bg-white dark:bg-slate-700
+                className={`w-full text-sm text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md bg-white dark:bg-slate-700
                                   file:mr-4 file:py-2.5 file:px-4 file:border-0 file:text-sm file:font-semibold
-                                  file:bg-sky-100 dark:file:bg-sky-700 file:text-sky-700 dark:file:text-sky-200 hover:file:bg-sky-200 dark:hover:file:bg-sky-600 file:rounded-l-md file:cursor-pointer'
+                                  file:bg-sky-100 dark:file:bg-sky-700 file:text-sky-700 dark:file:text-sky-200 hover:file:bg-sky-200 dark:hover:file:bg-sky-600 file:rounded-l-md file:cursor-pointer ${fieldErrors[field.name] ? 'border-red-500' : ''}`}
               />
             ) : (
               <input
@@ -397,10 +417,13 @@ const SystemSettingsPage: React.FC = () => {
                 onChange={handleChange}
                 step={field.type === 'number' ? undefined : field.step}
                 required={field.required}
-                className='w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700'
+                className={`w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-all duration-150 shadow-sm hover:shadow-md text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 ${fieldErrors[field.name] ? 'border-red-500' : ''}`}
                 placeholder={`Enter ${field.label.toLowerCase()}`}
                 inputMode={field.type === 'number' ? 'decimal' : undefined}
               />
+            )}
+            {fieldErrors[field.name] && (
+              <p className='mt-1 text-xs text-red-500'>{fieldErrors[field.name]}</p>
             )}
           </div>
         ))}
@@ -413,7 +436,7 @@ const SystemSettingsPage: React.FC = () => {
               Logo Preview:
             </p>
             {settings.logo_image ? (
-              <Image
+              <img
                 src={settings.logo_image}
                 alt='Logo Preview'
                 className='max-h-32 h-auto w-auto object-contain rounded-lg border border-slate-300 dark:border-slate-600 shadow-md bg-slate-50 dark:bg-slate-700 p-2'
@@ -435,7 +458,7 @@ const SystemSettingsPage: React.FC = () => {
               Favicon Preview:
             </p>
             {settings.fav_image ? (
-              <Image
+              <img
                 src={settings.fav_image}
                 alt='Favicon Preview'
                 className='max-h-16 h-auto w-auto object-contain rounded-md border border-slate-300 dark:border-slate-600 shadow-md bg-slate-50 dark:bg-slate-700 p-1'

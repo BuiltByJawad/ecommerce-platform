@@ -6,7 +6,7 @@ import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
 
 interface Country { _id?: string; country_name: string }
-interface RateRow { country: string; percent: number }
+interface RateRow { country: string; percent: number | null }
 
 const AdminTaxesPage: React.FC = () => {
   const { theme } = useTheme();
@@ -15,6 +15,7 @@ const AdminTaxesPage: React.FC = () => {
   const [rates, setRates] = useState<RateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const fetchCountries = async () => {
     try {
@@ -33,7 +34,8 @@ const AdminTaxesPage: React.FC = () => {
       const arr: RateRow[] = res?.data?.data?.settings?.rates || [];
       setRates(arr);
     } catch (e: any) {
-      toast.error(e?.response?.data?.data?.error || 'Failed to load tax settings');
+      console.error(e);
+      setRates([]);
     } finally {
       setLoading(false);
     }
@@ -44,13 +46,26 @@ const AdminTaxesPage: React.FC = () => {
     fetchAdminRates();
   }, []);
 
-  const addRow = () => setRates((prev) => [...prev, { country: '', percent: 0 }]);
+  const addRow = () => setRates((prev) => [...prev, { country: '', percent: null }]);
   const removeRow = (idx: number) => setRates((prev) => prev.filter((_, i) => i !== idx));
 
   const save = async () => {
     try {
+      setShowErrors(true);
+      // Validate: country is required; percent must be a number between 0 and 100; allow 0
+      const hasErrors = rates.some((r) => !r.country || r.percent === null || Number.isNaN(Number(r.percent)) || Number(r.percent) < 0 || Number(r.percent) > 100);
+      if (rates.length > 0 && hasErrors) {
+        toast.error('Please fill country and a percent between 0 and 100, or remove empty rows.');
+        return;
+      }
       setSaving(true);
-      const cleaned = rates.filter((r) => r.country && r.percent >= 0);
+      const cleaned = rates
+        .filter((r) => r.country && r.percent !== null)
+        .map((r) => ({ country: r.country, percent: Math.max(0, Math.min(100, Number(r.percent))) }));
+      if (rates.length > 0 && cleaned.length === 0) {
+        toast.error('No valid rows to save. Remove empty rows or fill them.');
+        return;
+      }
       await put('/taxes/admin', { rates: cleaned }, {});
       toast.success('Tax rates saved');
       fetchAdminRates();
@@ -84,7 +99,7 @@ const AdminTaxesPage: React.FC = () => {
                     const v = e.target.value;
                     setRates((prev) => prev.map((row, i) => (i === idx ? { ...row, country: v } : row)));
                   }}
-                  className='border rounded px-2 py-1 text-sm dark:bg-gray-700'
+                  className={`border rounded px-2 py-1 text-sm dark:bg-gray-700 ${showErrors && !r.country ? 'border-red-500' : ''}`}
                 >
                   <option value=''>Select country</option>
                   {countries.map((c) => (
@@ -97,12 +112,14 @@ const AdminTaxesPage: React.FC = () => {
                   type='number'
                   min={0}
                   max={100}
-                  value={r.percent}
+                  value={r.percent ?? ''}
                   onChange={(e) => {
-                    const v = Number(e.target.value);
+                    const valStr = e.target.value;
+                    const v = valStr === '' ? null : Number(valStr);
                     setRates((prev) => prev.map((row, i) => (i === idx ? { ...row, percent: v } : row)));
                   }}
-                  className='border rounded px-2 py-1 text-sm dark:bg-gray-700'
+                  placeholder='Tax percent (0-100)'
+                  className={`border rounded px-2 py-1 text-sm dark:bg-gray-700 ${showErrors && (r.percent === null || Number.isNaN(Number(r.percent)) || Number(r.percent) < 0 || Number(r.percent) > 100) ? 'border-red-500' : ''}`}
                 />
                 <div>
                   <button onClick={() => removeRow(idx)} className='px-2 py-1 border rounded text-sm'>Remove</button>

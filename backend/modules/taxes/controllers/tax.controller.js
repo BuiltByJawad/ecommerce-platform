@@ -18,9 +18,19 @@ export const upsertAdminRates = async (req, res) => {
   try {
     const { rates } = req.body || {};
     if (!Array.isArray(rates)) return errorResponse(400, "FAILED", "rates must be an array", res);
-    const cleaned = rates
-      .filter((r) => r && r.country)
-      .map((r) => ({ country: r.country, percent: Math.max(0, Math.min(100, Number(r.percent) || 0)) }));
+    const cleaned = (rates || [])
+      .filter(
+        (r) =>
+          r &&
+          r.country &&
+          r.percent !== undefined &&
+          r.percent !== null &&
+          !Number.isNaN(Number(r.percent))
+      )
+      .map((r) => ({ country: r.country, percent: Math.max(0, Math.min(100, Number(r.percent))) }));
+    if (rates.length > 0 && cleaned.length === 0) {
+      return errorResponse(400, "FAILED", "No valid tax rates to save. Provide country and percent between 0 and 100 or remove empty rows.", res);
+    }
     const doc = await TaxSetting.findOneAndUpdate(
       { ownerType: "admin" },
       { ownerType: "admin", rates: cleaned },
@@ -58,9 +68,19 @@ export const upsertVendorRates = async (req, res) => {
     const vendorId = req.user?._id;
     if (!vendorId) return errorResponse(401, "FAILED", "Unauthorized", res);
     if (!Array.isArray(rates)) return errorResponse(400, "FAILED", "rates must be an array", res);
-    const cleaned = rates
-      .filter((r) => r && r.country)
-      .map((r) => ({ country: r.country, percent: Math.max(0, Math.min(100, Number(r.percent) || 0)) }));
+    const cleaned = (rates || [])
+      .filter(
+        (r) =>
+          r &&
+          r.country &&
+          r.percent !== undefined &&
+          r.percent !== null &&
+          !Number.isNaN(Number(r.percent))
+      )
+      .map((r) => ({ country: r.country, percent: Math.max(0, Math.min(100, Number(r.percent))) }));
+    if (rates.length > 0 && cleaned.length === 0) {
+      return errorResponse(400, "FAILED", "No valid tax rates to save. Provide country and percent between 0 and 100 or remove empty rows.", res);
+    }
     const doc = await TaxSetting.findOneAndUpdate(
       { ownerType: "vendor", owner: vendorId },
       { ownerType: "vendor", owner: vendorId, rates: cleaned },

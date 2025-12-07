@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { format } from 'date-fns';
 import { Bell, CheckCheck } from 'lucide-react';
 import useAxios from '@/context/axiosContext';
 import { getSocket } from './socketClient';
@@ -226,9 +227,9 @@ const Notifications: React.FC = () => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-md shadow-lg border bg-white dark:bg-gray-800 dark:border-gray-700 z-50">
-          <div className="flex items-center justify-between px-3 py-2 border-b dark:border-gray-700">
-            <div className="text-sm font-semibold">Notifications</div>
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-xl shadow-lg border bg-white dark:bg-gray-900 dark:border-gray-700 z-50">
+          <div className="flex items-center justify-between px-3 py-2 border-b dark:border-gray-700/80 bg-gray-50/80 dark:bg-gray-800/80">
+            <div className="text-sm font-semibold tracking-tight">Notifications</div>
             <div className="flex items-center gap-2">
               <label className="text-xs inline-flex items-center gap-1">
                 <input
@@ -246,9 +247,19 @@ const Notifications: React.FC = () => {
                 <CheckCheck className="w-3 h-3" /> Mark all read
               </button>
               {user?.role === 'company' ? (
-                <Link href='/business/notifications' className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">View all</Link>
+                <Link
+                  href="/business/notifications"
+                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  View all
+                </Link>
               ) : user?.role === 'admin' ? (
-                <Link href='/admin/notifications' className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">View all</Link>
+                <Link
+                  href="/admin/notifications"
+                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  View all
+                </Link>
               ) : null}
             </div>
           </div>
@@ -256,20 +267,26 @@ const Notifications: React.FC = () => {
             {loading ? (
               <div className="p-3 text-sm">Loading...</div>
             ) : items.length === 0 ? (
-              <div className="p-3 text-sm">No notifications</div>
+              <div className="p-3 text-sm text-gray-500 dark:text-gray-300">No notifications</div>
             ) : (
               items.map((n) => (
                 <button
                   key={n._id}
                   onClick={() => handleRowClick(n)}
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition ${
+                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition ${
                     n.read ? 'opacity-80' : 'bg-yellow-50 dark:bg-yellow-900/20'
                   }`}
                 >
-                  <div className="text-sm font-medium truncate">{n.title}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{n.message}</div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{n.title}</div>
+                      <div className="mt-0.5 text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
+                        {n.message}
+                      </div>
+                    </div>
+                  </div>
                   <div className="mt-1 text-[10px] text-gray-500">
-                    {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                    {n.createdAt ? format(new Date(n.createdAt), 'PP p') : ''}
                   </div>
                 </button>
               ))

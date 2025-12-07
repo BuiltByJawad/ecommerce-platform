@@ -33,7 +33,8 @@ const AdminShippingPage: React.FC = () => {
       const arr: RateRow[] = res?.data?.data?.settings?.rates || [];
       setRates(arr);
     } catch (e: any) {
-      toast.error(e?.response?.data?.data?.error || 'Failed to load shipping settings');
+      console.error(e);
+      setRates([]);
     } finally {
       setLoading(false);
     }
@@ -101,6 +102,7 @@ const AdminShippingPage: React.FC = () => {
                     const v = Number(e.target.value);
                     setRates((prev) => prev.map((row, i) => (i === idx ? { ...row, rate: v } : row)));
                   }}
+                  placeholder='Shipping rate amount'
                   className='border rounded px-2 py-1 text-sm dark:bg-gray-700'
                 />
                 <div>

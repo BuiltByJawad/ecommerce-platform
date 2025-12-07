@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import useAxios from '@/context/axiosContext';
 import { toast } from 'react-toastify';
 import { useAppSelector } from '@/app/redux';
+import { formatDateTime } from '@/utils/date';
 
 interface ReturnItem { productId: string; name: string; quantity: number }
 interface ReturnRow {
@@ -119,7 +120,7 @@ const VendorReturnsPage: React.FC = () => {
                         <option value='Refunded'>Refunded</option>
                       </select>
                     </td>
-                    <td className='px-3 py-2 text-right'>{new Date(r.createdAt).toLocaleString()}</td>
+                    <td className='px-3 py-2 text-right'>{formatDateTime(r.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -10,6 +10,7 @@ import {
   useReactTable,
   ColumnDef,
 } from '@tanstack/react-table';
+import { formatDate as formatDateUtil } from '@/utils/date';
 import { FiChevronUp, FiChevronDown, FiEdit, FiTrash2, FiImage } from 'react-icons/fi';
 
 const columnHelper = createColumnHelper<Product>();
@@ -21,14 +22,8 @@ const formatPrice = (price?: number) =>
         currency: 'USD',
       }).format(price)
     : 'N/A';
-const formatDate = (dateString?: string) =>
-  dateString
-    ? new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : 'N/A';
+    
+const formatDate = (dateString?: string) => formatDateUtil(dateString, 'N/A');
 const getStatusColor = (status?: Product['status']) => {
   if (!status) return 'bg-gray-100 text-gray-700';
   switch (status) {

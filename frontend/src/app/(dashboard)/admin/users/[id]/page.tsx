@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useParams, useRouter } from 'next/navigation';
 import useAxios from '@/context/axiosContext';
+import { formatDateTime } from '@/utils/date';
 
 interface UserDoc {
   _id: string;
@@ -134,8 +135,8 @@ const AdminUserDetailPage: React.FC = () => {
                   onChange={(e) => handleActiveToggle(e.target.checked)}
                 />
               </div>
-              <div><span className='text-gray-600'>Created:</span> {user.createdAt ? new Date(user.createdAt).toLocaleString() : '-'}</div>
-              <div><span className='text-gray-600'>Updated:</span> {user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '-'}</div>
+              <div><span className='text-gray-600'>Created:</span> {formatDateTime(user.createdAt, '-')}</div>
+              <div><span className='text-gray-600'>Updated:</span> {formatDateTime(user.updatedAt, '-')}</div>
             </div>
           </div>
 

@@ -211,6 +211,9 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+    if (user && user.active === false) {
+      return errorResponse(403, "FAILED", "Account disabled", res);
+    }
     if (user && (await user.comparePassword(password))) {
       const { accessToken, refreshToken } = generateToken(
         user._id,
